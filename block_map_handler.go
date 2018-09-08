@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type BlockMap map[string]bool
+
 func GenerateBlockageMap(blocklistUrls []string) (BlockMap, error) {
 	blockageMap := make(BlockMap, 0)
 	for _, blocklistURL := range blocklistUrls {

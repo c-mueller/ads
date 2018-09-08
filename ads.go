@@ -13,15 +13,12 @@ import (
 
 var log = clog.NewWithPlugin("ads")
 
-// DNSAdBlock is an example plugin to show how to write a plugin.
 type DNSAdBlock struct {
 	Next       plugin.Handler
 	BlockLists []string
 	TargetIP   net.IP
 	blockMap   BlockMap
 }
-
-type BlockMap map[string]bool
 
 func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
