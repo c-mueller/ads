@@ -1,0 +1,11 @@
+.:53 {
+   ads {
+        default-lists
+        target 10.133.7.8
+   }
+   forward . tls://1.1.1.1 {
+        tls_servername tls.cloudflare-dns.com
+   }
+   log
+   errors
+}
