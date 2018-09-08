@@ -4,16 +4,23 @@ DNS AdBlocker plugin for CoreDNS.
 
 ## Compiling
 
-First get the CoreDNS source code by running
+First get the CoreDNS source code by running, after you cloned this repository into the proper path in your `GOPATH`
 ```bash
 go get github.com/coredns/coredns
 ```
 
+Then navigate to the coredns directory
+```bash
+cd $(go env GOPATH)/src/github.com/coredns/coredns
+```
 
+Next update the `plugin.cfg` in the root of the coredns repository
 
 ```bash
 sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
 ```
+
+Finally run `make` to build CoreDNS with the `ads` plugin
 
 ## Configuring
 
