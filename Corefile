@@ -1,5 +1,6 @@
 .:53 {
    ads {
+        log
         default-lists
         target 10.133.7.8
    }

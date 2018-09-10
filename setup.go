@@ -20,6 +20,7 @@ func setup(c *caddy.Controller) error {
 
 	blocklists := make([]string, 0)
 	targetIP := net.ParseIP(defaultResolutionIP)
+	logBlocks := false
 
 	for c.NextBlock() {
 		value := c.Val()
@@ -42,6 +43,8 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error("ads", c.Err("Invalid target IP specified"))
 			}
 			targetIP = ip
+		case "log":
+			logBlocks = true
 			// Do Nothing in case of { or }
 		case "}":
 			break
@@ -58,6 +61,8 @@ func setup(c *caddy.Controller) error {
 		once.Do(func() {
 			metrics.MustRegister(c, requestCount)
 			metrics.MustRegister(c, blockedRequestCount)
+			metrics.MustRegister(c, requestCountBySource)
+			metrics.MustRegister(c, blockedRequestCountBySource)
 		})
 		return nil
 	})
@@ -73,6 +78,7 @@ func setup(c *caddy.Controller) error {
 			BlockLists: blocklists,
 			blockMap:   blockageMap,
 			TargetIP:   targetIP,
+			LogBlocks:  logBlocks,
 		}
 
 		return adsPlugin

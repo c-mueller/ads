@@ -17,6 +17,7 @@ type DNSAdBlock struct {
 	Next       plugin.Handler
 	BlockLists []string
 	TargetIP   net.IP
+	LogBlocks  bool
 	blockMap   BlockMap
 }
 
@@ -28,6 +29,7 @@ func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 	qname = strings.TrimSuffix(qname, ".")
 
 	requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
+	requestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
 	if e.blockMap[qname] {
 		answers := a(state.Name(), []net.IP{e.TargetIP})
@@ -39,6 +41,11 @@ func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 		w.WriteMsg(m)
 
 		blockedRequestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
+		blockedRequestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
+
+		if e.LogBlocks {
+			log.Infof("Blocked request %q from %q", qname, state.IP())
+		}
 
 		return dns.RcodeSuccess, nil
 	}
