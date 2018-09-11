@@ -1,3 +1,17 @@
+// Copyright 2018 Christian Müller <cmueller.dev@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package ads
 
 import (
@@ -6,6 +20,7 @@ import (
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/mholt/caddy"
 	"net"
+	"time"
 )
 
 func init() {
@@ -21,6 +36,11 @@ func setup(c *caddy.Controller) error {
 	blocklists := make([]string, 0)
 	targetIP := net.ParseIP(defaultResolutionIP)
 	logBlocks := false
+
+	enableAutoUpdate := true
+	renewalAttemptCount := 5
+	failureRetryDelay := time.Minute * 1
+	renewalInterval := time.Hour * 24
 
 	for c.NextBlock() {
 		value := c.Val()
@@ -43,6 +63,20 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error("ads", c.Err("Invalid target IP specified"))
 			}
 			targetIP = ip
+		case "disable-auto-update":
+			enableAutoUpdate = false
+			break
+		case "auto-update-interval":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No update interval defined"))
+			}
+			i, err := time.ParseDuration(c.Val())
+			if err != nil {
+				return plugin.Error("ads", err)
+			}
+			renewalInterval = i
+			break
+			//TODO Add Options for Failure Retry interval and Failure retry count
 		case "log":
 			logBlocks = true
 			// Do Nothing in case of { or }
@@ -57,12 +91,22 @@ func setup(c *caddy.Controller) error {
 		blocklists = defaultBlocklists
 	}
 
+	updater := &BlocklistUpdater{
+		RetryCount:     renewalAttemptCount,
+		RetryDelay:     failureRetryDelay,
+		UpdateInterval: renewalInterval,
+		Plugin:         nil,
+	}
+
 	c.OnStartup(func() error {
 		once.Do(func() {
 			metrics.MustRegister(c, requestCount)
 			metrics.MustRegister(c, blockedRequestCount)
 			metrics.MustRegister(c, requestCountBySource)
 			metrics.MustRegister(c, blockedRequestCountBySource)
+			if enableAutoUpdate {
+				updater.Start()
+			}
 		})
 		return nil
 	})
@@ -73,12 +117,19 @@ func setup(c *caddy.Controller) error {
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
+
 		adsPlugin := DNSAdBlock{
 			Next:       next,
 			BlockLists: blocklists,
 			blockMap:   blockageMap,
 			TargetIP:   targetIP,
 			LogBlocks:  logBlocks,
+		}
+
+		updater.Plugin = &adsPlugin
+
+		if !enableAutoUpdate {
+			adsPlugin.updater = updater
 		}
 
 		return adsPlugin

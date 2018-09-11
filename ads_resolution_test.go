@@ -13,7 +13,3 @@
 // limitations under the License.
 
 package ads
-
-func (e DNSAdBlock) Health() bool {
-	return true
-}
