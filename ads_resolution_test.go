@@ -83,9 +83,9 @@ func initBlockedTestCases() []test.Case {
 	testCases := make([]test.Case, 0)
 	for i := 0; i < 100; i++ {
 		tcase := test.Case{
-			Qname: fmt.Sprintf("testhost-%03d.local.test.tld", i+1), Qtype: dns.TypeA,
+			Qname: fmt.Sprintf("testhost-%09d.local.test.tld", i+1), Qtype: dns.TypeA,
 			Answer: []dns.RR{
-				test.A(fmt.Sprintf("testhost-%03d.local.test.tld. 3600	IN	A 10.1.33.7", i+1)),
+				test.A(fmt.Sprintf("testhost-%09d.local.test.tld. 3600	IN	A 10.1.33.7", i+1)),
 			},
 		}
 		testCases = append(testCases, tcase)
@@ -96,7 +96,7 @@ func initBlockedTestCases() []test.Case {
 func initTestPlugin(t testing.TB) *DNSAdBlock {
 	blockmap := make(BlockMap, 0)
 	for i := 0; i < 100; i++ {
-		blockmap[fmt.Sprintf("testhost-%03d.local.test.tld", i+1)] = true
+		blockmap[fmt.Sprintf("testhost-%09d.local.test.tld", i+1)] = true
 	}
 	p := DNSAdBlock{
 		Next:       nxDomainHandler(),

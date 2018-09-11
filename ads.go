@@ -64,11 +64,7 @@ func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 
 		return dns.RcodeSuccess, nil
 	} else {
-		code, err := plugin.NextOrFailure(e.Name(), e.Next, ctx, w, r)
-
-		log.Info(code, err)
-
-		return code, err
+		return plugin.NextOrFailure(e.Name(), e.Next, ctx, w, r)
 	}
 }
 
