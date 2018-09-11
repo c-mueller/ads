@@ -71,7 +71,7 @@ func initAllowedTestCases() []test.Case {
 	for i := 0; i < 100; i++ {
 		tcase := test.Case{
 			Qname: fmt.Sprintf("testhost-%03d.local-a.test.tld", i+1), Qtype: dns.TypeA,
-			Rcode: dns.RcodeBadName,
+			Rcode: dns.RcodeNameError,
 		}
 		testCases = append(testCases, tcase)
 	}

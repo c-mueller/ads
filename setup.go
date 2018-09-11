@@ -20,6 +20,7 @@ import (
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/mholt/caddy"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -53,6 +54,9 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error("ads", c.Err("No URL found after list token"))
 			}
 			url := c.Val()
+			if !strings.HasPrefix(url,"http") || !strings.Contains(url,"://") {
+				return plugin.Error("ads", c.Err("Invalid url"))
+			}
 			blocklists = append(blocklists, url)
 		case "target":
 			if !c.NextArg() {

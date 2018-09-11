@@ -24,6 +24,7 @@ type BlocklistUpdater struct {
 	Plugin *DNSAdBlock
 
 	updateTicker *time.Ticker
+	lastUpdate   *time.Time
 }
 
 func (u *BlocklistUpdater) Start() {
@@ -42,6 +43,9 @@ func (u *BlocklistUpdater) run() {
 			blockMap, err := GenerateBlockageMap(u.Plugin.BlockLists)
 			if err == nil {
 				u.Plugin.blockMap = blockMap
+
+				lastUpdate := time.Now()
+				u.lastUpdate = &lastUpdate
 
 				log.Info("Blocklists have been updated")
 
