@@ -36,51 +36,53 @@ func GenerateBlockageMap(blocklistUrls []string) (BlockMap, error) {
 			return nil, err
 		}
 
-		urlCount := 0
-		for _, line := range strings.Split(string(data), "\n") {
-			// Skip lines containing comments
-			if strings.Contains(line, "#") {
-				continue
-			}
-
-			ln := cleanHostsLine(line)
-			substrings := strings.Split(ln, "\t")
-
-			url := ""
-
-			if len(substrings) == 0 {
-				continue
-			} else if len(substrings) == 1 {
-				url = substrings[0]
-			} else {
-				i := 1
-				for ; len(substrings[i]) == 0 && i < len(substrings)-1; i++ {
-					// Count up to determine last index
-				}
-
-				if len(substrings) == i {
-					continue
-				}
-
-				url = substrings[i]
-			}
-
-			if url == "" {
-				continue
-			}
-
-			// Enable blocking for url
-			blockageMap[url] = true
-			urlCount++
-		}
-		log.Infof("Fetched %d entries.", urlCount)
-
+		parseBlockFile(data, blockageMap)
 	}
 
 	log.Infof("Registered %d unique domains to block", len(blockageMap))
 
 	return blockageMap, nil
+}
 
+func parseBlockFile(data []byte, blockageMap BlockMap) {
+	urlCount := 0
+	for _, line := range strings.Split(string(data), "\n") {
+		// Skip lines containing comments
+		if strings.Contains(line, "#") {
+			continue
+		}
+
+		ln := cleanHostsLine(line)
+		substrings := strings.Split(ln, "\t")
+
+		url := ""
+
+		if len(substrings) == 0 {
+			continue
+		} else if len(substrings) == 1 {
+			url = substrings[0]
+		} else {
+			i := 1
+			for ; len(substrings[i]) == 0 && i < len(substrings)-1; i++ {
+				// Count up to determine last index
+			}
+
+			if len(substrings) == i {
+				continue
+			}
+
+			url = substrings[i]
+		}
+
+		if url == "" {
+			continue
+		}
+
+		// Enable blocking for url
+		blockageMap[url] = true
+		urlCount++
+	}
+	log.Infof("Fetched %d entries.", urlCount)
 }
 
 func cleanHostsLine(line string) string {

@@ -23,6 +23,10 @@ type BlocklistUpdater struct {
 
 	Plugin *DNSAdBlock
 
+	persistBlocklists     bool
+	persistencePath       string
+	lastPersistenceUpdate time.Time
+
 	updateTicker *time.Ticker
 	lastUpdate   *time.Time
 }
@@ -34,28 +38,53 @@ func (u *BlocklistUpdater) Start() {
 }
 
 func (u *BlocklistUpdater) run() {
+	if u.persistBlocklists {
+		sleepDuration := u.lastPersistenceUpdate.Add(u.UpdateInterval).Sub(time.Now())
+		log.Infof("Scheduled next update in %s", sleepDuration.String())
+		time.Sleep(sleepDuration)
+
+		u.handleBlocklistUpdate()
+	}
 	for range u.updateTicker.C {
-		failCount := 0
+		u.handleBlocklistUpdate()
+	}
+}
 
-		for failCount < u.RetryCount {
-			log.Infof("Updating blocklists...")
+func (u *BlocklistUpdater) handleBlocklistUpdate() {
+	failCount := 0
+	for failCount < u.RetryCount {
+		log.Infof("Updating blocklists...")
 
-			blockMap, err := GenerateBlockageMap(u.Plugin.BlockLists)
-			if err == nil {
-				u.Plugin.blockMap = blockMap
+		blockMap, err := GenerateBlockageMap(u.Plugin.BlockLists)
+		if err == nil {
+			u.Plugin.blockMap = blockMap
 
-				lastUpdate := time.Now()
-				u.lastUpdate = &lastUpdate
+			lastUpdate := time.Now()
+			u.lastUpdate = &lastUpdate
 
-				log.Info("Blocklists have been updated")
+			if u.persistBlocklists {
+				persistedBlocklist := StoredBlocklistConfiguration{
+					UpdateTimestamp: int(time.Now().Unix()),
+					Blocklists:      u.Plugin.BlockLists,
+					BlockedNames:    blockMap,
+				}
 
-				break
+				err := persistedBlocklist.Persist(u.persistencePath)
+				if err == nil {
+					u.lastPersistenceUpdate = time.Now()
+				} else {
+					log.Error("Persisting blocklists failed.")
+				}
 			}
 
-			log.Errorf("Attempt %d/%d failed. Error %q%s", failCount+1, u.RetryCount, err.Error(), failCount != u.RetryCount-1)
+			log.Info("Blocklists have been updated")
 
-			failCount++
-			time.Sleep(u.RetryDelay)
+			break
 		}
+
+		log.Errorf("Attempt %d/%d failed. Error %q%s", failCount+1, u.RetryCount, err.Error(), failCount != u.RetryCount-1)
+
+		failCount++
+		time.Sleep(u.RetryDelay)
 	}
 }

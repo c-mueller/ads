@@ -66,8 +66,6 @@ func TestSetup_Initialisation(t *testing.T) {
 
 	c := caddy.NewTestController("dns", default_Corefile)
 	assert.NoError(t, setup(c))
-
-	caddy.Start()
 }
 
 func TestSetup_Defaults(t *testing.T) {

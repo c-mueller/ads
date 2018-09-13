@@ -15,6 +15,7 @@
 package ads
 
 import (
+	"fmt"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
@@ -43,6 +44,9 @@ func setup(c *caddy.Controller) error {
 	failureRetryDelay := time.Minute * 1
 	renewalInterval := time.Hour * 24
 
+	persistBlocklist := false
+	persistedBlocklistPath := ""
+
 	for c.NextBlock() {
 		value := c.Val()
 
@@ -54,7 +58,7 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error("ads", c.Err("No URL found after list token"))
 			}
 			url := c.Val()
-			if !strings.HasPrefix(url,"http") || !strings.Contains(url,"://") {
+			if !strings.HasPrefix(url, "http") || !strings.Contains(url, "://") {
 				return plugin.Error("ads", c.Err("Invalid url"))
 			}
 			blocklists = append(blocklists, url)
@@ -81,6 +85,18 @@ func setup(c *caddy.Controller) error {
 			renewalInterval = i
 			break
 			//TODO Add Options for Failure Retry interval and Failure retry count
+		case "blocklist-file":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No filepath for blocklist persistency defined"))
+			}
+			if persistBlocklist {
+				return plugin.Error("ads", c.Err("Only one filepath for blocklist persistency can be defined"))
+			}
+			path := c.Val()
+			//TODO implement check if path is valid
+			persistBlocklist = true
+			persistedBlocklistPath = path
+			break
 		case "log":
 			logBlocks = true
 			// Do Nothing in case of { or }
@@ -96,10 +112,12 @@ func setup(c *caddy.Controller) error {
 	}
 
 	updater := &BlocklistUpdater{
-		RetryCount:     renewalAttemptCount,
-		RetryDelay:     failureRetryDelay,
-		UpdateInterval: renewalInterval,
-		Plugin:         nil,
+		RetryCount:        renewalAttemptCount,
+		RetryDelay:        failureRetryDelay,
+		UpdateInterval:    renewalInterval,
+		Plugin:            nil,
+		persistBlocklists: persistBlocklist,
+		persistencePath:   persistedBlocklistPath,
 	}
 
 	c.OnStartup(func() error {
@@ -115,9 +133,34 @@ func setup(c *caddy.Controller) error {
 		return nil
 	})
 
-	blockageMap, err := GenerateBlockageMap(blocklists)
-	if err != nil {
-		return plugin.Error("ads", c.Err("Failed to fetch blocklists"))
+	blockageMap := make(BlockMap, 0)
+
+	if !persistBlocklist || !exists(persistedBlocklistPath) {
+		bm, err := GenerateBlockageMap(blocklists)
+		if err != nil {
+			return plugin.Error("ads", c.Err("Failed to fetch blocklists"))
+		}
+		blockageMap = bm
+		persistLoadedBlocklist(updater, enableAutoUpdate, blocklists, blockageMap, persistedBlocklistPath)
+	} else {
+		storedBlocklist, err := ReadBlocklistConfiguration(persistedBlocklistPath)
+		if err != nil {
+			return plugin.Error("ads",
+				c.Err(fmt.Sprintf("Loading persisted blocklist from %q failed", persistedBlocklistPath)))
+		}
+		if storedBlocklist.NeedsUpdate(renewalInterval) && enableAutoUpdate ||
+			!validateBlocklistEquality(blocklists, storedBlocklist.Blocklists) && enableAutoUpdate ||
+			!enableAutoUpdate {
+			bm, err := GenerateBlockageMap(blocklists)
+			if err != nil {
+				return plugin.Error("ads", c.Err("Failed to fetch blocklists"))
+			}
+			blockageMap = bm
+			persistLoadedBlocklist(updater, enableAutoUpdate, blocklists, blockageMap, persistedBlocklistPath)
+		} else {
+			blockageMap = storedBlocklist.BlockedNames
+			updater.lastPersistenceUpdate = time.Unix(int64(storedBlocklist.UpdateTimestamp), 0)
+		}
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
@@ -140,4 +183,16 @@ func setup(c *caddy.Controller) error {
 	})
 
 	return nil
+}
+
+func persistLoadedBlocklist(updater *BlocklistUpdater, enableAutoUpdate bool, blocklists []string, blockageMap BlockMap, persistedBlocklistPath string) {
+	updater.lastPersistenceUpdate = time.Now()
+	if enableAutoUpdate {
+		persistedBlocklist := StoredBlocklistConfiguration{
+			UpdateTimestamp: int(time.Now().Unix()),
+			Blocklists:      blocklists,
+			BlockedNames:    blockageMap,
+		}
+		persistedBlocklist.Persist(persistedBlocklistPath)
+	}
 }
