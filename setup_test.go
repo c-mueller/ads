@@ -37,7 +37,7 @@ const invalid_Target_MissingIP_Corefile = `ads {
   target
 }`
 const invalid_Target_InvalidIP_Corefile = `ads {
-  target not-a-valid-url
+  target not-a-valid-ip
 }`
 
 const valid_List_Corefile = `ads {

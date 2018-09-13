@@ -14,7 +14,8 @@ Then navigate to the coredns directory
 cd $(go env GOPATH)/src/github.com/coredns/coredns
 ```
 
-Next update the `plugin.cfg` in the root of the coredns repository
+Next update
+ the `plugin.cfg` in the root of the coredns repository
 
 ```bash
 sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
@@ -40,21 +41,33 @@ For example:
 
 ### Configuring the `ads` plugin
 
-You can see the supported configuration option in the following Corefile
+You can see a more complex `ads` configuration in the following Corefile
 
 ```
 .:53 {
    ads {
-        list http://url-to-my-blocklists.com/list1.txt # Define custom Blocklists
+        list http://url-to-my-blocklists.com/list1.txt
         list http://url-to-my-blocklists.com/list2.txt
-        default-lists # Use the default blocklists
-        target 10.133.7.8 # The IPv4 Address (IPv6 is currently unsupported) to point blocked requests at
+        default-lists
+        target 10.133.7.8
    }
    # Other directives have been omitted
 }
 ```
 
-A note when setting custom blocklists:
-If the configuration contains one or more `list` options, the plugin will not load the default blocklists anymore.
-In order to still keep those add the `default-lists` option.
-If no list is added the default lists will be used. It is not necessary to explicitly set them.
+#### Configuration options
+
+- `list <LIST URL>` HTTP(S)-URL to a hostlist to Block
+- `default-lists` Readds the default hostlists to the internal list of blocklists.
+    - This command is needed if you want to add custom blocklists and you want to also use the default ones
+- `target <IPv4 IP>` defines the target ip to which blocked domains should resolve to
+- `disable-auto-update` Turns off the automatic update of the blocklists every 24h (can be changed)
+- `log` Print a message every time a request gets blocked
+- `auto-update-interval <INTERVAL>` Allows the modification of the interval between blocklist updates
+    - This operation uses Golangs `time.ParseDuration()` function in order to parse the duration.
+    Please ensure the specified duration can be parsed by this operation. Please refer to [here](https://golang.org/pkg/time/#ParseDuration).
+    - This gets ignored if the automatic blocklist updates have been disabled
+- `blocklist-path <FILEPATH FOR PERSISTED BLOCKLIST>` This option enables persisting of the blocklist
+  to prevent a automatic redownload everytime CoreDNS restarts. The lists get persisted everytime a update get performed.
+    - If autoupdates have been turned off the list will be reloaded every time the application launches.
+    Making this option pretty useless for this kind of configuration.
