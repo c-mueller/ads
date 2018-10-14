@@ -74,6 +74,5 @@ func (s *StoredBlocklistConfiguration) Persist(path string) error {
 }
 
 func (s *StoredBlocklistConfiguration) NeedsUpdate(updateDuration time.Duration) bool {
-	log.Info(time.Now(),time.Unix(int64(s.UpdateTimestamp),0), updateDuration,time.Now().After(time.Unix(int64(s.UpdateTimestamp), 0).Add(updateDuration)))
 	return time.Now().After(time.Unix(int64(s.UpdateTimestamp), 0).Add(updateDuration))
 }

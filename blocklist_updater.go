@@ -14,9 +14,13 @@
 
 package ads
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type BlocklistUpdater struct {
+	Enabled        bool
 	UpdateInterval time.Duration
 	RetryCount     int
 	RetryDelay     time.Duration
@@ -33,8 +37,47 @@ type BlocklistUpdater struct {
 
 func (u *BlocklistUpdater) Start() {
 	log.Info("Registered Update Hook")
-	u.updateTicker = time.NewTicker(u.UpdateInterval)
-	go u.run()
+	go func() {
+		//Sleep 5 seconds to ensure coredns is up and running
+		time.Sleep(5 * time.Second)
+
+		u.updateTicker = time.NewTicker(u.UpdateInterval)
+
+		if !u.persistBlocklists || !exists(u.persistencePath) {
+			bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
+			if err != nil {
+				panic("Failed to fetch blocklists")
+			}
+			u.Plugin.blockMap = bm
+			persistLoadedBlocklist(u, u.Enabled, u.Plugin.BlockLists, bm, u.persistencePath)
+		} else {
+			storedBlocklist, err := ReadBlocklistConfiguration(u.persistencePath)
+			if err != nil {
+				panic(fmt.Sprintf("Loading persisted blocklist from %q failed", u.persistencePath))
+			}
+			if storedBlocklist.NeedsUpdate(u.UpdateInterval) && u.Enabled ||
+				!validateBlocklistEquality(u.Plugin.BlockLists, storedBlocklist.Blocklists) && u.Enabled ||
+				!u.Enabled {
+				bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
+				if err != nil {
+					panic("Failed to fetch blocklists")
+				}
+				u.Plugin.blockMap = bm
+				persistLoadedBlocklist(u, u.Enabled, u.Plugin.BlockLists, bm, u.persistencePath)
+			} else {
+				u.Plugin.blockMap = storedBlocklist.BlockedNames
+
+				log.Infof("Loaded Blocklist Length: %d", len(storedBlocklist.BlockedNames))
+				log.Infof("Blocklist Length: %d", len(u.Plugin.blockMap))
+
+				u.lastPersistenceUpdate = time.Unix(int64(storedBlocklist.UpdateTimestamp), 0)
+			}
+		}
+
+		if u.Enabled {
+			go u.run()
+		}
+	}()
 }
 
 func (u *BlocklistUpdater) run() {

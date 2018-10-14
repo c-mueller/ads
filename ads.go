@@ -36,7 +36,9 @@ type DNSAdBlock struct {
 	updater    *BlocklistUpdater
 }
 
-func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
+	log.Infof("BlocklistSize %d", len(e.blockMap))
+
 	state := request.Request{W: w, Req: r}
 
 	qname := state.Name()
@@ -69,7 +71,7 @@ func (e DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.M
 }
 
 // Name implements the Handler interface.
-func (e DNSAdBlock) Name() string { return "ads" }
+func (e *DNSAdBlock) Name() string { return "ads" }
 
 func a(zone string, ips []net.IP) []dns.RR {
 	answers := []dns.RR{}

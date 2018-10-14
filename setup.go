@@ -15,7 +15,6 @@
 package ads
 
 import (
-	"fmt"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
@@ -112,6 +111,7 @@ func setup(c *caddy.Controller) error {
 	}
 
 	updater := &BlocklistUpdater{
+		Enabled:           enableAutoUpdate,
 		RetryCount:        renewalAttemptCount,
 		RetryDelay:        failureRetryDelay,
 		UpdateInterval:    renewalInterval,
@@ -126,42 +126,12 @@ func setup(c *caddy.Controller) error {
 			metrics.MustRegister(c, blockedRequestCount)
 			metrics.MustRegister(c, requestCountBySource)
 			metrics.MustRegister(c, blockedRequestCountBySource)
-			if enableAutoUpdate {
-				updater.Start()
-			}
+			updater.Start()
 		})
 		return nil
 	})
 
 	blockageMap := make(BlockMap, 0)
-
-	if !persistBlocklist || !exists(persistedBlocklistPath) {
-		bm, err := GenerateBlockageMap(blocklists)
-		if err != nil {
-			return plugin.Error("ads", c.Err("Failed to fetch blocklists"))
-		}
-		blockageMap = bm
-		persistLoadedBlocklist(updater, enableAutoUpdate, blocklists, blockageMap, persistedBlocklistPath)
-	} else {
-		storedBlocklist, err := ReadBlocklistConfiguration(persistedBlocklistPath)
-		if err != nil {
-			return plugin.Error("ads",
-				c.Err(fmt.Sprintf("Loading persisted blocklist from %q failed", persistedBlocklistPath)))
-		}
-		if storedBlocklist.NeedsUpdate(renewalInterval) && enableAutoUpdate ||
-			!validateBlocklistEquality(blocklists, storedBlocklist.Blocklists) && enableAutoUpdate ||
-			!enableAutoUpdate {
-			bm, err := GenerateBlockageMap(blocklists)
-			if err != nil {
-				return plugin.Error("ads", c.Err("Failed to fetch blocklists"))
-			}
-			blockageMap = bm
-			persistLoadedBlocklist(updater, enableAutoUpdate, blocklists, blockageMap, persistedBlocklistPath)
-		} else {
-			blockageMap = storedBlocklist.BlockedNames
-			updater.lastPersistenceUpdate = time.Unix(int64(storedBlocklist.UpdateTimestamp), 0)
-		}
-	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
@@ -179,7 +149,7 @@ func setup(c *caddy.Controller) error {
 			adsPlugin.updater = updater
 		}
 
-		return adsPlugin
+		return &adsPlugin
 	})
 
 	return nil
