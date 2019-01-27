@@ -37,8 +37,6 @@ type DNSAdBlock struct {
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
-	log.Infof("BlocklistSize %d", len(e.blockMap))
-
 	state := request.Request{W: w, Req: r}
 
 	qname := state.Name()

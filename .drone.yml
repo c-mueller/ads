@@ -1,0 +1,41 @@
+kind: pipeline
+name: linux-amd64
+
+platform:
+  arch: amd64
+  os: linux
+
+workspace:
+  base: /go
+  path: src/github.com/c-mueller/ads
+
+steps:
+  - name: load-deps
+    image: golang
+    commands:
+      - go get -d ./...
+      - go get github.com/Flaque/filet
+      - go get github.com/stretchr/testify/assert
+  - name: build-coredns-amd64
+    image: golang
+    commands:
+      - cd /go/src/github.com/coredns/coredns
+      - sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
+      - cat plugin.cfg
+      - make
+      - mkdir binaries
+      - mv coredns binaries/coredns-ads-amd64
+  - name: test
+    image: golang
+    commands:
+      - go test -v ./...
+  - name: build-coredns-arm
+    image: golang
+    environment:
+      GOOS: linux
+      GOARCH: arm
+    commands:
+      - cd /go/src/github.com/coredns/coredns
+      - make
+      - mv coredns binaries/coredns-ads-arm
+

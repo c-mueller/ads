@@ -20,6 +20,7 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/dnstest"
 	"github.com/coredns/coredns/plugin/test"
 	"github.com/miekg/dns"
+	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
 )
@@ -41,7 +42,8 @@ func TestLookup_Block(t *testing.T) {
 		}
 
 		resp := rec.Msg
-		test.SortAndCheck(t, resp, testCase)
+		err = test.SortAndCheck( resp, testCase)
+		assert.NoError(t, err)
 	}
 }
 

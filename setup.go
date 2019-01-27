@@ -41,7 +41,7 @@ func setup(c *caddy.Controller) error {
 	enableAutoUpdate := true
 	renewalAttemptCount := 5
 	failureRetryDelay := time.Minute * 1
-	renewalInterval := time.Hour * 24
+	renewalInterval := time.Hour*24
 
 	persistBlocklist := false
 	persistedBlocklistPath := ""
