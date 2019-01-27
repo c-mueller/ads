@@ -39,3 +39,6 @@ steps:
       - make
       - mv coredns binaries/coredns-ads-arm
 
+---
+kind: signature
+hmac: 45ec0bee9f900fd19f3c04357f0a44d2d6b4f8dbc92927dcd453ef7f8b9c0bcf

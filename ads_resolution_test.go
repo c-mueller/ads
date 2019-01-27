@@ -64,7 +64,8 @@ func TestLookup_Allow(t *testing.T) {
 		}
 
 		resp := rec.Msg
-		test.SortAndCheck(t, resp, testCase)
+		err = test.SortAndCheck( resp, testCase)
+		assert.NoError(t, err)
 	}
 }
 
