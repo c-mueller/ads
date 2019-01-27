@@ -20,11 +20,12 @@ steps:
     image: golang
     commands:
       - cd /go/src/github.com/coredns/coredns
+      - git checkout $(git describe --tags --abbrev=0)
       - sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
       - cat plugin.cfg
       - make
-      - mkdir binaries
-      - mv coredns binaries/coredns-ads-amd64
+      - mkdir /go/src/github.com/c-mueller/ads/binaries
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-amd64
   - name: test
     image: golang
     commands:
@@ -37,7 +38,16 @@ steps:
     commands:
       - cd /go/src/github.com/coredns/coredns
       - make
-      - mv coredns binaries/coredns-ads-arm
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-arm
+  - name: build-coredns-arm64
+    image: golang
+    environment:
+      GOOS: linux
+      GOARCH: arm
+    commands:
+      - cd /go/src/github.com/coredns/coredns
+      - make
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-arm64
   - name: publish
     image: plugins/github-release
     settings:
@@ -49,4 +59,4 @@ steps:
 
 ---
 kind: signature
-hmac: 58d06fe50b5df15833019f74bdfafa4ac4a24ff4ecdf3d77f69a440863b1a895
+hmac: 9b6583836344578d73b381726ad092c003df951ad7969ecdc58739028f2f670d
