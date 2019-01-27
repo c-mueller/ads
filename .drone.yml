@@ -38,7 +38,15 @@ steps:
       - cd /go/src/github.com/coredns/coredns
       - make
       - mv coredns binaries/coredns-ads-arm
+  - name: publish
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      files: binaries/*
+    when:
+      event: tag
 
 ---
 kind: signature
-hmac: 45ec0bee9f900fd19f3c04357f0a44d2d6b4f8dbc92927dcd453ef7f8b9c0bcf
+hmac: 58d06fe50b5df15833019f74bdfafa4ac4a24ff4ecdf3d77f69a440863b1a895
