@@ -41,8 +41,6 @@ func (u *BlocklistUpdater) Start() {
 		//Sleep 5 seconds to ensure coredns is up and running
 		time.Sleep(5 * time.Second)
 
-		u.updateTicker = time.NewTicker(u.UpdateInterval)
-
 		if !u.persistBlocklists || !exists(u.persistencePath) {
 			bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
 			if err != nil {
@@ -88,8 +86,12 @@ func (u *BlocklistUpdater) run() {
 
 		u.handleBlocklistUpdate()
 	}
+
+	u.updateTicker = time.NewTicker(u.UpdateInterval)
+
 	for range u.updateTicker.C {
 		u.handleBlocklistUpdate()
+		log.Infof("Scheduled next update in %s at %s", u.UpdateInterval.String(), time.Now().Add(u.UpdateInterval).String())
 	}
 }
 

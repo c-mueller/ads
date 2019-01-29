@@ -23,6 +23,9 @@ sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
 
 Finally run `make` to build CoreDNS with the `ads` plugin
 
+The releases section also contains binaries of the latest CoreDNS with the
+ads plugin. These get built automatically using drone. Once they have been triggered.
+
 ## Configuring
 
 ### Default settings
