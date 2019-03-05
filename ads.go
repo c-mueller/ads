@@ -31,6 +31,7 @@ type DNSAdBlock struct {
 	Next        plugin.Handler
 	BlockLists  []string
 	TargetIP    net.IP
+	RuleSet     RuleSet
 	LogBlocks   bool
 	blockMap    BlockMap
 	updater     *BlocklistUpdater
@@ -47,7 +48,7 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 	requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 	requestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
-	if e.blockMap[qname] {
+	if e.blockMap[qname] && !e.RuleSet.IsWhitelisted(qname) || e.RuleSet.IsBlacklisted(qname) {
 		answers := a(state.Name(), []net.IP{e.TargetIP})
 		m := new(dns.Msg)
 		m.SetReply(r)

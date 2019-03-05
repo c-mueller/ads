@@ -60,6 +60,66 @@ const invalid_Interval_InvalidDuration_Corefile = `ads {
   auto-update-interval not-a-parsable-duration-string
 }`
 
+const valid_Whitelist_Single = `ads {
+  whitelist test.com
+}`
+const valid_Whitelist_Multi = `ads {
+  whitelist test.com
+  whitelist test.xyz
+}`
+const valid_Blacklist_Single = `ads {
+  blacklist test.com
+}`
+const valid_Blacklist_Multi = `ads {
+  blacklist test.com
+  blacklist test.xyz
+}`
+
+const invalid_Whitelist_Single = `ads {
+  whitelist
+}`
+const invalid_Whitelist_Multi = `ads {
+  whitelist test.com
+  whitelist
+}`
+const invalid_Blacklist_Single = `ads {
+  blacklist
+}`
+const invalid_Blacklist_Multi = `ads {
+  blacklist test.com
+  blacklist
+}`
+
+const valid_Regex_Whitelist_Single = `ads {
+  whitelist-regex (^|\.)local\.c-mueller\.de$
+}`
+const valid_Regex_Whitelist_Multi = `ads {
+  whitelist-regex (^|\.)local\.c-mueller\.de$
+  whitelist-regex (^|\.)local\.c-mueller\.xyz$
+}`
+const valid_Regex_Blacklist_Single = `ads {
+  blacklist-regex (^|\.)local\.c-mueller\.de$
+}`
+const valid_Regex_Blacklist_Multi = `ads {
+  blacklist-regex (^|\.)local\.c-mueller\.de$
+  blacklist-regex (^|\.)local\.c-mueller\.xyz$
+}`
+
+const invalid_Regex_Whitelist_Single = `ads {
+  whitelist-regex
+}`
+const invalid_Regex_Whitelist_Multi = `ads {
+  whitelist-regex (^|\.)local\.c-mueller\.de$
+  whitelist-regex
+}`
+const invalid_Regex_Blacklist_Single = `ads {
+  blacklist-regex
+}`
+const invalid_Regex_Blacklist_Multi = `ads {
+  blacklist-regex (^|\.)local\.c-mueller\.de$
+  blacklist-regex
+}`
+
 func TestSetup_Initialisation(t *testing.T) {
 	s := updateDefaultBlocklists(t)
 	defer s.Close()
@@ -142,6 +202,74 @@ func TestSetup_InvalidList(t *testing.T) {
 
 	c = caddy.NewTestController("dns", invalid_List_InvalidURL_Corefile)
 	assert.Error(t, setup(c))
+}
+
+func TestSetup_ValidWhiteAndBlacklist(t *testing.T) {
+	s := updateDefaultBlocklists(t)
+	defer s.Close()
+
+	cfs := []string{
+		valid_Blacklist_Multi,
+		valid_Blacklist_Single,
+		valid_Whitelist_Multi,
+		valid_Whitelist_Single,
+	}
+
+	for _, v := range cfs {
+		c := caddy.NewTestController("dns", v)
+		assert.NoError(t, setup(c))
+	}
+}
+
+func TestSetup_InvalidWhiteAndBlacklist(t *testing.T) {
+	s := updateDefaultBlocklists(t)
+	defer s.Close()
+
+	cfs := []string{
+		invalid_Blacklist_Multi,
+		invalid_Blacklist_Single,
+		invalid_Whitelist_Multi,
+		invalid_Whitelist_Single,
+	}
+
+	for _, v := range cfs {
+		c := caddy.NewTestController("dns", v)
+		assert.Error(t, setup(c))
+	}
+}
+
+func TestSetup_ValidRegexpWhiteAndBlacklist(t *testing.T) {
+	s := updateDefaultBlocklists(t)
+	defer s.Close()
+
+	cfs := []string{
+		valid_Regex_Blacklist_Multi,
+		valid_Regex_Blacklist_Single,
+		valid_Regex_Whitelist_Multi,
+		valid_Regex_Whitelist_Single,
+	}
+
+	for _, v := range cfs {
+		c := caddy.NewTestController("dns", v)
+		assert.NoError(t, setup(c))
+	}
+}
+
+func TestSetup_InvalidRegexpWhiteAndBlacklist(t *testing.T) {
+	s := updateDefaultBlocklists(t)
+	defer s.Close()
+
+	cfs := []string{
+		invalid_Regex_Blacklist_Multi,
+		invalid_Regex_Blacklist_Single,
+		invalid_Regex_Whitelist_Multi,
+		invalid_Regex_Whitelist_Single,
+	}
+
+	for _, v := range cfs {
+		c := caddy.NewTestController("dns", v)
+		assert.Error(t, setup(c))
+	}
 }
 
 func updateDefaultBlocklists(t *testing.T) *httptest.Server {

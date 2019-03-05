@@ -25,34 +25,133 @@ import (
 	"testing"
 )
 
+func TestLookup_RegexBlacklist(t *testing.T) {
+	ruleset := getEmptyRuleset()
+
+	err := ruleset.AddRegexToBlacklist(`(^|\.)local\.c-mueller\.de$`)
+	assert.NoError(t, err)
+
+	testCases := make([]test.Case, 0)
+	for i := 0; i < 100; i++ {
+		qname := fmt.Sprintf("testhost-%09d.local.c-mueller.de", i+1)
+		tcase := test.Case{
+			Qname: qname,
+			Qtype: dns.TypeA,
+			Answer: []dns.RR{
+				test.A(fmt.Sprintf("%s. 3600	IN	A 10.1.33.7", qname)),
+			},
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	for i := 0; i < 10; i++ {
+		qname := fmt.Sprintf("testhost-%09d.c-mueller.de", i+1)
+
+		tcase := test.Case{
+			Qname: qname,
+			Qtype: dns.TypeA,
+			Rcode: dns.RcodeNameError,
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	p := initTestPlugin(t, ruleset)
+	ctx := context.TODO()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
+func TestLookup_RegexWhitelist(t *testing.T) {
+	ruleset := getEmptyRuleset()
+
+	err := ruleset.AddRegexToWhitelist(`(^|\.)local\.test\.tld$`)
+	assert.NoError(t, err)
+
+	testCases := make([]test.Case, 0)
+	for i := 0; i < 100; i++ {
+		tcase := test.Case{
+			Qname: fmt.Sprintf("testhost-%09d.local.test.tld", i+1),
+			Qtype: dns.TypeA,
+			Rcode: dns.RcodeNameError,
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	p := initTestPlugin(t, ruleset)
+	ctx := context.TODO()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
+func TestLookup_Whitelist(t *testing.T) {
+	whitelist := make([]string, 0)
+
+	testCases := make([]test.Case, 0)
+	for i := 0; i < 10; i++ {
+		qname := fmt.Sprintf("testhost-%09d.local.test.tld", i+1)
+		whitelist = append(whitelist, qname)
+
+		tcase := test.Case{
+			Qname: qname,
+			Qtype: dns.TypeA,
+			Rcode: dns.RcodeNameError,
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	testCases = append(testCases, initBlockedTestCases()[10:]...)
+
+	p := initTestPlugin(t, BuildRuleset(whitelist, make([]string, 0)))
+	ctx := context.TODO()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
+func TestLookup_Blacklist(t *testing.T) {
+	blacklist := make([]string, 0)
+
+	testCases := make([]test.Case, 0)
+	for i := 0; i < 10; i++ {
+		qname := fmt.Sprintf("testhost-%09d.local.test.tld", i+1)
+		blacklist = append(blacklist, qname)
+
+		tcase := test.Case{
+			Qname: qname,
+			Qtype: dns.TypeA,
+			Answer: []dns.RR{
+				test.A(fmt.Sprintf("%s. 3600	IN	A 10.1.33.7", qname)),
+			},
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	testCases = append(testCases, initAllowedTestCases()[10:]...)
+
+	p := initTestPlugin(t, BuildRuleset(make([]string, 0), blacklist))
+	ctx := context.TODO()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
 func TestLookup_Block(t *testing.T) {
-	p := initTestPlugin(t)
+	p := initTestPlugin(t, getEmptyRuleset())
 	ctx := context.TODO()
 
 	testCases := initBlockedTestCases()
 
-	for _, testCase := range testCases {
-		m := testCase.Msg()
-
-		rec := dnstest.NewRecorder(&test.ResponseWriter{})
-		_, err := p.ServeDNS(ctx, rec, m)
-		if err != nil {
-			t.Errorf("Expected no error, got %v\n", err)
-			return
-		}
-
-		resp := rec.Msg
-		err = test.SortAndCheck( resp, testCase)
-		assert.NoError(t, err)
-	}
+	resolveTestCases(testCases, p, ctx, t)
 }
 
 func TestLookup_Allow(t *testing.T) {
-	p := initTestPlugin(t)
+	p := initTestPlugin(t, getEmptyRuleset())
 	ctx := context.TODO()
 
 	testCases := initAllowedTestCases()
 
+	resolveTestCases(testCases, p, ctx, t)
+}
+
+func resolveTestCases(testCases []test.Case, p *DNSAdBlock, ctx context.Context, t *testing.T) {
 	for _, testCase := range testCases {
 		m := testCase.Msg()
 
@@ -60,11 +159,11 @@ func TestLookup_Allow(t *testing.T) {
 		_, err := p.ServeDNS(ctx, rec, m)
 		if err != nil {
 			t.Errorf("Expected no error, got %v\n", err)
-			return
+
 		}
 
 		resp := rec.Msg
-		err = test.SortAndCheck( resp, testCase)
+		err = test.SortAndCheck(resp, testCase)
 		assert.NoError(t, err)
 	}
 }
@@ -96,7 +195,7 @@ func initBlockedTestCases() []test.Case {
 	return testCases
 }
 
-func initTestPlugin(t testing.TB) *DNSAdBlock {
+func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
 	blockmap := make(BlockMap, 0)
 	for i := 0; i < 100; i++ {
 		blockmap[fmt.Sprintf("testhost-%09d.local.test.tld", i+1)] = true
@@ -105,12 +204,17 @@ func initTestPlugin(t testing.TB) *DNSAdBlock {
 		Next:       nxDomainHandler(),
 		blockMap:   blockmap,
 		BlockLists: []string{"http://localhost:8080/mylist.txt"},
+		RuleSet:    rs,
 		updater:    nil,
 		LogBlocks:  true,
 		TargetIP:   net.ParseIP("10.1.33.7"),
 	}
 
 	return &p
+}
+
+func getEmptyRuleset() RuleSet {
+	return BuildRuleset(make([]string, 0), make([]string, 0))
 }
 
 func nxDomainHandler() test.Handler {
@@ -120,5 +224,4 @@ func nxDomainHandler() test.Handler {
 		w.WriteMsg(m)
 		return dns.RcodeNameError, nil
 	})
-
 }

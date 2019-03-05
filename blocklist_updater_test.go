@@ -34,7 +34,7 @@ func TestBlocklistUpdater(t *testing.T) {
 
 	url := fmt.Sprintf("%s/list.txt", server.URL)
 
-	p := initTestPlugin(t)
+	p := initTestPlugin(t, getEmptyRuleset())
 
 	p.BlockLists = []string{url}
 	p.blockMap = make(BlockMap, 0)
@@ -54,7 +54,7 @@ func TestBlocklistUpdater(t *testing.T) {
 	time.Sleep(time.Second * 6)
 	assert.Equal(t, 1000, len(p.blockMap))
 
-	time.Sleep(time.Second *5)
+	time.Sleep(time.Second * 5)
 	assert.Equal(t, 2000, len(p.blockMap))
 
 	p.updater.updateTicker.Stop()

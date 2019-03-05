@@ -19,6 +19,7 @@ import (
 	gz "compress/gzip"
 	"io/ioutil"
 	"os"
+	"sort"
 )
 
 func validateBlocklistEquality(a, b []string) bool {
@@ -72,4 +73,37 @@ func gunzip(data []byte) ([]byte, error) {
 	defer compressionReader.Close()
 
 	return ioutil.ReadAll(compressionReader)
+}
+
+type pair struct {
+	Key   string
+	Value int
+}
+type pairs []pair
+
+func (p pairs) Len() int           { return len(p) }
+func (p pairs) Less(i, j int) bool { return p[i].Value < p[j].Value }
+func (p pairs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+func keepHighestValues(input map[string]int, count int) map[string]int {
+	if len(input) <= count {
+		return input
+	}
+	elems := make(pairs, len(input))
+
+	idx := 0
+	for k, v := range input {
+		elems[idx] = pair{k, v}
+		idx++
+	}
+
+	sort.Sort(elems)
+
+	valmap := make(map[string]int)
+	for i := 0; i < count; i++ {
+		e := elems[i]
+		valmap[e.Key] = e.Value
+	}
+
+	return valmap
 }

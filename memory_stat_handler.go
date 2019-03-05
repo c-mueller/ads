@@ -53,6 +53,9 @@ func (h *MemoryStatHandler) Insert(request Request) (string, error) {
 }
 
 func (h *MemoryStatHandler) Delete(uid string) error {
+	if len(uid) == 0 {
+		return fmt.Errorf("Invalid input. Uid must not be empty")
+	}
 	if h.RequestList[uid].RequestID != uid {
 		return fmt.Errorf("%q not Found", uid)
 	}
@@ -96,10 +99,42 @@ func (h *MemoryStatHandler) GetRequestsBetween(from, to time.Time) []Request {
 }
 
 func (h *MemoryStatHandler) GetStats() Stats {
-	panic("implement me")
+	total := len(h.RequestList)
+	blocked := 0
+	clients := make(map[string]int)
+	permittedHosts := make(map[string]int)
+	blockedHosts := make(map[string]int)
+	for _, request := range h.RequestList {
+		if request.Blocked {
+			blocked++
+			blockedHosts[request.RequestedHostname]++
+		} else {
+			permittedHosts[request.RequestedHostname]++
+		}
+
+		clients[request.Recipient]++
+	}
+
+	return Stats{
+		TotalRequests:       total,
+		BlockedRequests:     blocked,
+		TopClients:          keepHighestValues(clients, 25),
+		TopBlockedDomains:   keepHighestValues(permittedHosts, 25),
+		TopPermittedDomains: keepHighestValues(blockedHosts, 25),
+	}
 }
 
 func (h *MemoryStatHandler) Cleanup() error {
-
+	mintimestamp := time.Now().Add(24 * -1 * time.Hour).Unix()
+	for k, v := range h.Requests {
+		if k <= mintimestamp {
+			for _, elem := range v {
+				err := h.Delete(elem.RequestID)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return nil
 }

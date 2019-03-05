@@ -50,6 +50,12 @@ func setup(c *caddy.Controller) error {
 	statEndpoint := ":11022"
 	statMode := "inmemory"
 
+	whitelistEntries := make([]string, 0)
+	blacklistEntries := make([]string, 0)
+
+	whitelistRegexEntries := make([]string, 0)
+	blacklistRegexEntries := make([]string, 0)
+
 	for c.NextBlock() {
 		value := c.Val()
 
@@ -102,6 +108,30 @@ func setup(c *caddy.Controller) error {
 			break
 		case "log":
 			logBlocks = true
+		case "whitelist":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No name for whitelist entry defined"))
+			}
+			whitelistEntries = append(whitelistEntries, c.Val())
+			break
+		case "blacklist":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No name for blacklist entry defined"))
+			}
+			blacklistEntries = append(blacklistEntries, c.Val())
+			break
+		case "whitelist-regex":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No name for whitelist regex entry defined"))
+			}
+			whitelistRegexEntries = append(whitelistRegexEntries, c.Val())
+			break
+		case "blacklist-regex":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No name for blacklist regex entry defined"))
+			}
+			blacklistRegexEntries = append(blacklistRegexEntries, c.Val())
+			break
 		case "stats":
 			enableStats = true
 			// TODO Implement Endpoint and dbmode configuration
@@ -157,12 +187,26 @@ func setup(c *caddy.Controller) error {
 
 	blockageMap := make(BlockMap, 0)
 
+	ruleset := BuildRuleset(whitelistEntries, blacklistEntries)
+
+	for _, v := range whitelistRegexEntries {
+		if err := ruleset.AddRegexToWhitelist(v); err != nil {
+			return err
+		}
+	}
+	for _, v := range blacklistRegexEntries {
+		if err := ruleset.AddRegexToBlacklist(v); err != nil {
+			return err
+		}
+	}
+
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
 		adsPlugin := DNSAdBlock{
 			Next:        next,
 			BlockLists:  blocklists,
 			blockMap:    blockageMap,
+			RuleSet:     ruleset,
 			TargetIP:    targetIP,
 			LogBlocks:   logBlocks,
 			StatHandler: statHandler,
