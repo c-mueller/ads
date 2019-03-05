@@ -1,4 +1,4 @@
-// Copyright 2018 Christian Müller <dev@c-mueller.xyz>
+// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,12 +28,13 @@ import (
 var log = clog.NewWithPlugin("ads")
 
 type DNSAdBlock struct {
-	Next       plugin.Handler
-	BlockLists []string
-	TargetIP   net.IP
-	LogBlocks  bool
-	blockMap   BlockMap
-	updater    *BlocklistUpdater
+	Next        plugin.Handler
+	BlockLists  []string
+	TargetIP    net.IP
+	LogBlocks   bool
+	blockMap    BlockMap
+	updater     *BlocklistUpdater
+	StatHandler StatHandler
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {

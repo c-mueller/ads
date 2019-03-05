@@ -1,4 +1,4 @@
-// Copyright 2018 Christian Müller <dev@c-mueller.xyz>
+// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,10 +41,14 @@ func setup(c *caddy.Controller) error {
 	enableAutoUpdate := true
 	renewalAttemptCount := 5
 	failureRetryDelay := time.Minute * 1
-	renewalInterval := time.Hour*24
+	renewalInterval := time.Hour * 24
 
 	persistBlocklist := false
 	persistedBlocklistPath := ""
+
+	enableStats := false
+	statEndpoint := ":11022"
+	statMode := "inmemory"
 
 	for c.NextBlock() {
 		value := c.Val()
@@ -98,6 +102,9 @@ func setup(c *caddy.Controller) error {
 			break
 		case "log":
 			logBlocks = true
+		case "stats":
+			enableStats = true
+			// TODO Implement Endpoint and dbmode configuration
 			// Do Nothing in case of { or }
 		case "}":
 			break
@@ -120,6 +127,23 @@ func setup(c *caddy.Controller) error {
 		persistencePath:   persistedBlocklistPath,
 	}
 
+	var repo StatRepository
+	if statMode == "inmemory" {
+		repo = &MemoryStatHandler{}
+	} else {
+		repo = &MemoryStatHandler{}
+	}
+
+	statHandler := StatHandler{
+		Enabled:  enableStats,
+		Endpoint: statEndpoint,
+		Repo:     repo,
+	}
+
+	if err := statHandler.Init(); err != nil {
+		return err
+	}
+
 	c.OnStartup(func() error {
 		once.Do(func() {
 			metrics.MustRegister(c, requestCount)
@@ -136,11 +160,12 @@ func setup(c *caddy.Controller) error {
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
 		adsPlugin := DNSAdBlock{
-			Next:       next,
-			BlockLists: blocklists,
-			blockMap:   blockageMap,
-			TargetIP:   targetIP,
-			LogBlocks:  logBlocks,
+			Next:        next,
+			BlockLists:  blocklists,
+			blockMap:    blockageMap,
+			TargetIP:    targetIP,
+			LogBlocks:   logBlocks,
+			StatHandler: statHandler,
 		}
 
 		updater.Plugin = &adsPlugin
