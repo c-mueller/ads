@@ -29,7 +29,6 @@ const firstHostlistPath = "testdata/update_hostlist_test_first_list"
 const secondHostlistPath = "testdata/update_hostlist_test_second_list"
 
 func TestBlocklistUpdater(t *testing.T) {
-	return
 	server := initTestServer(t)
 	defer server.Close()
 
@@ -41,22 +40,24 @@ func TestBlocklistUpdater(t *testing.T) {
 	p.blockMap = make(BlockMap, 0)
 
 	updater := BlocklistUpdater{
+		Enabled:        true,
 		Plugin:         p,
 		UpdateInterval: time.Second * 2,
-		RetryCount:     1,
+		RetryCount:     10,
 		RetryDelay:     time.Second * 1,
 	}
 
 	p.updater = &updater
 
 	p.updater.Start()
-	defer p.updater.updateTicker.Stop()
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 6)
 	assert.Equal(t, 1000, len(p.blockMap))
 
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second *5)
 	assert.Equal(t, 2000, len(p.blockMap))
+
+	p.updater.updateTicker.Stop()
 }
 
 func initTestServer(t *testing.T) *httptest.Server {

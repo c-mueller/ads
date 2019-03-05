@@ -80,6 +80,7 @@ func (u *BlocklistUpdater) Start() {
 }
 
 func (u *BlocklistUpdater) run() {
+	log.Info("Running update loop")
 	if u.persistBlocklists {
 		sleepDuration := u.lastPersistenceUpdate.Add(u.UpdateInterval).Sub(time.Now())
 		log.Infof("Scheduled next update in %s", sleepDuration.String())
@@ -128,7 +129,7 @@ func (u *BlocklistUpdater) handleBlocklistUpdate() {
 			break
 		}
 
-		log.Errorf("Attempt %d/%d failed. Error %q%s", failCount+1, u.RetryCount, err.Error(), failCount != u.RetryCount-1)
+		log.Errorf("Attempt %d/%d failed. Error %q", failCount+1, u.RetryCount, err.Error())
 
 		failCount++
 		time.Sleep(u.RetryDelay)
