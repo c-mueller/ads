@@ -1,4 +1,4 @@
-// Copyright 2018 Christian Müller <cmueller.dev@gmail.com>
+// Copyright 2018 Christian Müller <dev@c-mueller.xyz>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ type BlocklistUpdater struct {
 
 func (u *BlocklistUpdater) Start() {
 	log.Info("Registered Update Hook")
+	
 	go func() {
 		//Sleep 5 seconds to ensure coredns is up and running
 		time.Sleep(5 * time.Second)

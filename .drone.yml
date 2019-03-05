@@ -22,7 +22,7 @@ steps:
       - cd /go/src/github.com/coredns/coredns
       # Uncomment once Two param TestCase Method is in release
       # probably v1.4.0
-      #- git checkout $(git describe --tags --abbrev=0)
+      - git checkout $(git describe --tags --abbrev=0)
       - sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
       - cat plugin.cfg
       - make
@@ -61,4 +61,4 @@ steps:
 
 ---
 kind: signature
-hmac: 653717583bc70348ad4db02a4314e30c7b679c61300d39ade8712baf67275ec7
+hmac: 33925d781f7d56eb0d2e18e56010c3ad052ce0d07d0b0a8ade999fbe7864356f
