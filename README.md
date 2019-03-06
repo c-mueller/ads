@@ -52,6 +52,8 @@ You can see a more complex `ads` configuration in the following Corefile
         list http://url-to-my-blocklists.com/list1.txt
         list http://url-to-my-blocklists.com/list2.txt
         default-lists
+        blacklist google.com
+        whitelist googleadservices.com
         target 10.133.7.8
    }
    # Other directives have been omitted
@@ -74,3 +76,5 @@ You can see a more complex `ads` configuration in the following Corefile
   to prevent a automatic redownload everytime CoreDNS restarts. The lists get persisted everytime a update get performed.
     - If autoupdates have been turned off the list will be reloaded every time the application launches.
     Making this option pretty useless for this kind of configuration.
+- `whitelist <QNAME>` and `blacklist <QNAME>` Allows the explicit whitelisting or blacklisting of specific qnames. If a qname is on the whitelist it will not be blocked. 
+- `whitelist-regex <REGEX>` and `blacklist-regex <REGEX>` identical to the regular whitelist and blacklist options. But instead of blocking a specific qname blocking is done for a regular expression. Yo might want to define exceptions to a regex blacklist entry. This can be done by using eitehr the `whitelist` or `whitelist-regex` options. 
