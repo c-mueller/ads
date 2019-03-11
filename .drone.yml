@@ -43,8 +43,14 @@ steps:
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-amd64
   - name: test
     image: golang
+    secrets:
+      - codecov_token
+    environment:
+      CODECOV_TOKEN:
+        from_secret: codecov_token
     commands:
-      - go test -v ./...
+      - go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+      - curl -s https://codecov.io/bash | bash
   - name: build-coredns-arm
     image: golang
     environment:
@@ -74,4 +80,4 @@ steps:
 
 ---
 kind: signature
-hmac: af922951b178f69580e748491dfffac2502c8e45241f28c1df7caa6570c486d3
+hmac: fe0640bdb6f0d40b22a78c7c011f9f5655eb9e0a9c67275ece354cdb6ade2557
