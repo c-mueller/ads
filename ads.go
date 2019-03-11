@@ -64,8 +64,11 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 			log.Infof("Blocked request %q from %q", qname, state.IP())
 		}
 
+		e.StatHandler.InsertRequest(state,true)
+
 		return dns.RcodeSuccess, nil
 	} else {
+		e.StatHandler.InsertRequest(state,true)
 		return plugin.NextOrFailure(e.Name(), e.Next, ctx, w, r)
 	}
 }

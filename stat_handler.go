@@ -15,6 +15,7 @@
 package ads
 
 import (
+	"github.com/coredns/coredns/request"
 	"time"
 )
 
@@ -48,6 +49,24 @@ type StatRepository interface {
 	Cleanup() error
 	Init() error
 	Close() error
+}
+
+func (s *StatHandler) InsertRequest(r request.Request, blocked bool) {
+	if !s.Enabled {
+		return
+	}
+
+	req := Request{
+		Recipient:         r.IP(),
+		Blocked:           blocked,
+		RequestedHostname: r.QName(),
+		Timestamp:         time.Now().Unix(),
+	}
+
+	_, err := s.Repo.Insert(req)
+	if err != nil {
+		log.Errorf("%s", err.Error())
+	}
 }
 
 func (s *StatHandler) Init() error {
