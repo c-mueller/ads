@@ -1,7 +1,7 @@
 # CoreDNS - ads Plugin
 
 [![Build Status](https://cloud.drone.io/api/badges/c-mueller/ads/status.svg)](https://cloud.drone.io/c-mueller/ads)
-
+[![codecov](https://codecov.io/gh/c-mueller/ads/branch/master/graph/badge.svg)](https://codecov.io/gh/c-mueller/ads)
 
 DNS AdBlocker plugin for CoreDNS.
 
