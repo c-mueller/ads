@@ -35,7 +35,6 @@ type DNSAdBlock struct {
 	LogBlocks   bool
 	blockMap    BlockMap
 	updater     *BlocklistUpdater
-	StatHandler StatHandler
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {

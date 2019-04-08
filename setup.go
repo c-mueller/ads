@@ -46,10 +46,6 @@ func setup(c *caddy.Controller) error {
 	persistBlocklist := false
 	persistedBlocklistPath := ""
 
-	enableStats := false
-	statEndpoint := ":11022"
-	statMode := "inmemory"
-
 	whitelistEntries := make([]string, 0)
 	blacklistEntries := make([]string, 0)
 
@@ -132,10 +128,6 @@ func setup(c *caddy.Controller) error {
 			}
 			blacklistRegexEntries = append(blacklistRegexEntries, c.Val())
 			break
-		case "stats":
-			enableStats = true
-			// TODO Implement Endpoint and dbmode configuration
-			// Do Nothing in case of { or }
 		case "}":
 			break
 		case "{":
@@ -155,23 +147,6 @@ func setup(c *caddy.Controller) error {
 		Plugin:            nil,
 		persistBlocklists: persistBlocklist,
 		persistencePath:   persistedBlocklistPath,
-	}
-
-	var repo StatRepository
-	if statMode == "inmemory" {
-		repo = &MemoryStatHandler{}
-	} else {
-		repo = &MemoryStatHandler{}
-	}
-
-	statHandler := StatHandler{
-		Enabled:  enableStats,
-		Endpoint: statEndpoint,
-		Repo:     repo,
-	}
-
-	if err := statHandler.Init(); err != nil {
-		return err
 	}
 
 	c.OnStartup(func() error {
@@ -209,7 +184,6 @@ func setup(c *caddy.Controller) error {
 			RuleSet:     ruleset,
 			TargetIP:    targetIP,
 			LogBlocks:   logBlocks,
-			StatHandler: statHandler,
 		}
 
 		updater.Plugin = &adsPlugin
