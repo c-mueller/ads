@@ -45,7 +45,8 @@ func (u *BlocklistUpdater) Start() {
 		if !u.persistBlocklists || !exists(u.persistencePath) {
 			bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
 			if err != nil {
-				panic("Failed to fetch blocklists")
+				log.Error(err)
+				return
 			}
 			u.Plugin.blockMap = bm
 			persistLoadedBlocklist(u, u.Enabled, u.Plugin.BlockLists, bm, u.persistencePath)
@@ -59,7 +60,8 @@ func (u *BlocklistUpdater) Start() {
 				!u.Enabled {
 				bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
 				if err != nil {
-					panic("Failed to fetch blocklists")
+					log.Error(err)
+					return
 				}
 				u.Plugin.blockMap = bm
 				persistLoadedBlocklist(u, u.Enabled, u.Plugin.BlockLists, bm, u.persistencePath)
