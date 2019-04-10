@@ -60,6 +60,28 @@ func TestBlocklistUpdater(t *testing.T) {
 	p.updater.updateTicker.Stop()
 }
 
+func TestBlocklistUpdaterWithBadList(t *testing.T) {
+	p := initTestPlugin(t, getEmptyRuleset())
+
+	p.BlockLists = []string{"https://badhost/doesnotexist"}
+	p.blockMap = make(BlockMap, 0)
+
+	updater := BlocklistUpdater{
+		Enabled:        false,
+		Plugin:         p,
+		UpdateInterval: time.Second * 2,
+		RetryCount:     10,
+		RetryDelay:     time.Second * 1,
+	}
+
+	p.updater = &updater
+	p.updater.Start()
+
+	// give it time to fail
+	time.Sleep(time.Second * 6)
+	assert.Equal(t, 0, len(p.blockMap))
+}
+
 func initTestServer(t *testing.T) *httptest.Server {
 	firstPath, err := os.Open(firstHostlistPath)
 	assert.NoError(t, err)
