@@ -17,8 +17,16 @@ Then navigate to the coredns directory
 cd $(go env GOPATH)/src/github.com/coredns/coredns
 ```
 
-Next update
- the `plugin.cfg` in the root of the coredns repository
+Next update the `plugin.cfg` in the root of the coredns repository as follows
+
+```bash
+sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
+```
+
+while I would suggest having the `ads` plugin before the `cache` plugin because it will
+cause the changes in the blocklists to be applied instantly. However the overall performance of
+the DNS server could degrade when having many regex rules. In that case I recommend putting the
+plugin before the `hosts` plugin:
 
 ```bash
 sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
