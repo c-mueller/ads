@@ -21,7 +21,7 @@ Next update
  the `plugin.cfg` in the root of the coredns repository
 
 ```bash
-sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
+sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
 ```
 
 Finally run `make` to build CoreDNS with the `ads` plugin
