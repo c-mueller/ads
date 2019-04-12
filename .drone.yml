@@ -33,10 +33,9 @@ steps:
     image: golang
     commands:
       - cd /go/src/github.com/coredns/coredns
-      # Uncomment once Two param TestCase Method is in release
-      # probably v1.4.0
       - git checkout $(git describe --tags --abbrev=0)
-      - sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
+      #- sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
+      - sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
       - cat plugin.cfg
       - make
       - mkdir /go/src/github.com/c-mueller/ads/binaries
@@ -80,4 +79,4 @@ steps:
 
 ---
 kind: signature
-hmac: fe0640bdb6f0d40b22a78c7c011f9f5655eb9e0a9c67275ece354cdb6ade2557
+hmac: cd28d00abfcc83fd26cc6532f7d8bb723b41e1412b45aef271a82b4d0720377f
