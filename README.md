@@ -29,7 +29,7 @@ the DNS server could degrade when having many regex rules. In that case I recomm
 plugin before the `hosts` plugin:
 
 ```bash
-sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
+sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
 ```
 
 Finally run `make` to build CoreDNS with the `ads` plugin

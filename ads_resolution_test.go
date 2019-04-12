@@ -25,6 +25,32 @@ import (
 	"testing"
 )
 
+func TestLookup_Block_IPv6(t *testing.T) {
+	blacklist := make([]string, 0)
+
+	testCases := make([]test.Case, 0)
+	for i := 0; i < 10; i++ {
+		qname := fmt.Sprintf("testhost-%09d.local.test.tld", i+1)
+		blacklist = append(blacklist, qname)
+
+		tcase := test.Case{
+			Qname: qname,
+			Qtype: dns.TypeAAAA,
+			Answer: []dns.RR{
+				test.AAAA(fmt.Sprintf("%s. 3600	IN	AAAA fe80::9cbd:c3ff:fe28:e133", qname)),
+			},
+		}
+		testCases = append(testCases, tcase)
+	}
+
+	testCases = append(testCases, initAllowedTestCases()[10:]...)
+
+	p := initTestPlugin(t, BuildRuleset(make([]string, 0), blacklist))
+	ctx := context.TODO()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
 func TestLookup_RegexBlacklist(t *testing.T) {
 	ruleset := getEmptyRuleset()
 
@@ -208,6 +234,7 @@ func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
 		updater:    nil,
 		LogBlocks:  true,
 		TargetIP:   net.ParseIP("10.1.33.7"),
+		TargetIPv6: net.ParseIP("fe80::9cbd:c3ff:fe28:e133"),
 	}
 
 	return &p
