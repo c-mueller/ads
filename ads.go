@@ -28,13 +28,14 @@ import (
 var log = clog.NewWithPlugin("ads")
 
 type DNSAdBlock struct {
-	Next        plugin.Handler
-	BlockLists  []string
-	TargetIP    net.IP
-	RuleSet     RuleSet
-	LogBlocks   bool
-	blockMap    BlockMap
-	updater     *BlocklistUpdater
+	Next       plugin.Handler
+	BlockLists []string
+	TargetIP   net.IP
+	TargetIPv6 net.IP
+	RuleSet    RuleSet
+	LogBlocks  bool
+	blockMap   BlockMap
+	updater    *BlocklistUpdater
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -48,7 +49,13 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 	requestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
 	if !e.RuleSet.IsWhitelisted(qname) && (e.blockMap[qname] || e.RuleSet.IsBlacklisted(qname)) {
-		answers := a(state.Name(), []net.IP{e.TargetIP})
+		var answers []dns.RR
+		if state.QType() == dns.TypeAAAA {
+			answers = aaaa(state.Name(), []net.IP{e.TargetIPv6})
+		} else {
+			answers = a(state.Name(), []net.IP{e.TargetIP})
+		}
+
 		m := new(dns.Msg)
 		m.SetReply(r)
 		m.Authoritative, m.RecursionAvailable = true, true
@@ -73,12 +80,23 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 func (e *DNSAdBlock) Name() string { return "ads" }
 
 func a(zone string, ips []net.IP) []dns.RR {
-	answers := []dns.RR{}
+	var answers []dns.RR
 	for _, ip := range ips {
 		r := new(dns.A)
 		r.Hdr = dns.RR_Header{Name: zone, Rrtype: dns.TypeA,
 			Class: dns.ClassINET, Ttl: 3600}
 		r.A = ip
+		answers = append(answers, r)
+	}
+	return answers
+}
+func aaaa(zone string, ips []net.IP) []dns.RR {
+	var answers []dns.RR
+	for _, ip := range ips {
+		r := new(dns.AAAA)
+		r.Hdr = dns.RR_Header{Name: zone, Rrtype: dns.TypeAAAA,
+			Class: dns.ClassINET, Ttl: 3600}
+		r.AAAA = ip
 		answers = append(answers, r)
 	}
 	return answers
