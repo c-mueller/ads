@@ -51,7 +51,7 @@ func TestBlocklistUpdater(t *testing.T) {
 
 	p.updater.Start()
 
-	time.Sleep(time.Second * 6)
+	time.Sleep(time.Second * 1)
 	assert.Equal(t, 1000, len(p.blockMap))
 
 	time.Sleep(time.Second * 5)

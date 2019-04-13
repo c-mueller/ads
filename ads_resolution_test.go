@@ -226,15 +226,19 @@ func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
 	for i := 0; i < 100; i++ {
 		blockmap[fmt.Sprintf("testhost-%09d.local.test.tld", i+1)] = true
 	}
+
+	cfg := defaultConfigWithoutRules
+	cfg.TargetIP = net.ParseIP("10.1.33.7")
+	cfg.TargetIPv6 = net.ParseIP("fe80::9cbd:c3ff:fe28:e133")
+	cfg.EnableLogging = true
+
 	p := DNSAdBlock{
 		Next:       nxDomainHandler(),
 		blockMap:   blockmap,
 		BlockLists: []string{"http://localhost:8080/mylist.txt"},
 		RuleSet:    rs,
 		updater:    nil,
-		LogBlocks:  true,
-		TargetIP:   net.ParseIP("10.1.33.7"),
-		TargetIPv6: net.ParseIP("fe80::9cbd:c3ff:fe28:e133"),
+		config:     &cfg,
 	}
 
 	return &p

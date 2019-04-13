@@ -51,7 +51,7 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 		if state.QType() == dns.TypeAAAA {
 			answers = aaaa(state.Name(), []net.IP{e.config.TargetIPv6})
 		} else {
-			answers = a(state.Name(), []net.IP{e.config.TargetIPv6})
+			answers = a(state.Name(), []net.IP{e.config.TargetIP})
 		}
 
 		m := new(dns.Msg)

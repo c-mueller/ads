@@ -37,10 +37,10 @@ type BlocklistUpdater struct {
 
 func (u *BlocklistUpdater) Start() {
 	log.Info("Registered Update Hook")
-	
+
 	go func() {
-		//Sleep 5 seconds to ensure coredns is up and running
-		time.Sleep(5 * time.Second)
+		//Sleep 250 MS to ensure coredns is up and running
+		time.Sleep(250 * time.Millisecond)
 
 		if !u.persistBlocklists || !exists(u.persistencePath) {
 			bm, err := GenerateBlockageMap(u.Plugin.BlockLists)
