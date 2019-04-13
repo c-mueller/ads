@@ -30,12 +30,10 @@ var log = clog.NewWithPlugin("ads")
 type DNSAdBlock struct {
 	Next       plugin.Handler
 	BlockLists []string
-	TargetIP   net.IP
-	TargetIPv6 net.IP
 	RuleSet    RuleSet
-	LogBlocks  bool
 	blockMap   BlockMap
 	updater    *BlocklistUpdater
+	config     *adsPluginConfig
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
@@ -51,9 +49,9 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 	if !e.RuleSet.IsWhitelisted(qname) && (e.blockMap[qname] || e.RuleSet.IsBlacklisted(qname)) {
 		var answers []dns.RR
 		if state.QType() == dns.TypeAAAA {
-			answers = aaaa(state.Name(), []net.IP{e.TargetIPv6})
+			answers = aaaa(state.Name(), []net.IP{e.config.TargetIPv6})
 		} else {
-			answers = a(state.Name(), []net.IP{e.TargetIP})
+			answers = a(state.Name(), []net.IP{e.config.TargetIPv6})
 		}
 
 		m := new(dns.Msg)
@@ -66,7 +64,7 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 		blockedRequestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 		blockedRequestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
-		if e.LogBlocks {
+		if e.config.EnableLogging {
 			log.Infof("Blocked request %q from %q", qname, state.IP())
 		}
 
@@ -90,6 +88,7 @@ func a(zone string, ips []net.IP) []dns.RR {
 	}
 	return answers
 }
+
 func aaaa(zone string, ips []net.IP) []dns.RR {
 	var answers []dns.RR
 	for _, ip := range ips {

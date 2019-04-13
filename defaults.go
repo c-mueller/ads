@@ -14,6 +14,11 @@
 
 package ads
 
+import (
+	"net"
+	"time"
+)
+
 var defaultBlocklists = []string{
 	"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
 	"https://mirror1.malwaredomains.com/files/justdomains",
@@ -26,3 +31,22 @@ var defaultBlocklists = []string{
 
 const defaultIPv4ResolutionIP = "127.0.0.1"
 const defaultIPv6ResolutionIP = "::1"
+
+var defaultConfigWithoutRules = adsPluginConfig{
+	BlocklistURLs:       []string{},
+	BlacklistRules:      []string{},
+	WhitelistRules:      []string{},
+	RegexBlacklistRules: []string{},
+	RegexWhitelistRules: []string{},
+
+	TargetIP:   net.ParseIP(defaultIPv4ResolutionIP),
+	TargetIPv6: net.ParseIP(defaultIPv6ResolutionIP),
+
+	EnableAutoUpdate:              true,
+	BlocklistRenewalInterval:      time.Hour * 24,
+	BlocklistRenewalRetryInterval: time.Minute,
+	BlocklistRenewalRetryCount:    5,
+
+	EnableBlocklistPersistence: false,
+	BlocklistPersistencePath:   "",
+}

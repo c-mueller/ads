@@ -19,8 +19,6 @@ import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/mholt/caddy"
-	"net"
-	"strings"
 	"time"
 )
 
@@ -33,130 +31,19 @@ func init() {
 
 func setup(c *caddy.Controller) error {
 	c.Next()
-
-	blocklists := make([]string, 0)
-	targetIP := net.ParseIP(defaultIPv4ResolutionIP)
-	targetIPv6 := net.ParseIP(defaultIPv6ResolutionIP)
-	logBlocks := false
-
-	enableAutoUpdate := true
-	renewalAttemptCount := 5
-	failureRetryDelay := time.Minute * 1
-	renewalInterval := time.Hour * 24
-
-	persistBlocklist := false
-	persistedBlocklistPath := ""
-
-	whitelistEntries := make([]string, 0)
-	blacklistEntries := make([]string, 0)
-
-	whitelistRegexEntries := make([]string, 0)
-	blacklistRegexEntries := make([]string, 0)
-
-	for c.NextBlock() {
-		value := c.Val()
-
-		switch value {
-		case "default-lists":
-			blocklists = append(blocklists, defaultBlocklists...)
-		case "list":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No URL found after list token"))
-			}
-			url := c.Val()
-			if !strings.HasPrefix(url, "http") || !strings.Contains(url, "://") {
-				return plugin.Error("ads", c.Err("Invalid url"))
-			}
-			blocklists = append(blocklists, url)
-		case "target":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No target IP specified"))
-			}
-			ip := net.ParseIP(c.Val())
-			if ip == nil {
-				return plugin.Error("ads", c.Err("Invalid target IP specified"))
-			}
-			targetIP = ip
-		case "target-ipv6":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No target IP specified"))
-			}
-			ip := net.ParseIP(c.Val())
-			if ip == nil {
-				return plugin.Error("ads", c.Err("Invalid target IP specified"))
-			}
-			targetIPv6 = ip
-		case "disable-auto-update":
-			enableAutoUpdate = false
-			break
-		case "auto-update-interval":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No update interval defined"))
-			}
-			i, err := time.ParseDuration(c.Val())
-			if err != nil {
-				return plugin.Error("ads", err)
-			}
-			renewalInterval = i
-			break
-			//TODO Add Options for Failure Retry interval and Failure retry count
-		case "blocklist-file":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No filepath for blocklist persistency defined"))
-			}
-			if persistBlocklist {
-				return plugin.Error("ads", c.Err("Only one filepath for blocklist persistency can be defined"))
-			}
-			path := c.Val()
-			//TODO implement check if path is valid
-			persistBlocklist = true
-			persistedBlocklistPath = path
-			break
-		case "log":
-			logBlocks = true
-		case "whitelist":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No name for whitelist entry defined"))
-			}
-			whitelistEntries = append(whitelistEntries, c.Val())
-			break
-		case "blacklist":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No name for blacklist entry defined"))
-			}
-			blacklistEntries = append(blacklistEntries, c.Val())
-			break
-		case "whitelist-regex":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No name for whitelist regex entry defined"))
-			}
-			whitelistRegexEntries = append(whitelistRegexEntries, c.Val())
-			break
-		case "blacklist-regex":
-			if !c.NextArg() {
-				return plugin.Error("ads", c.Err("No name for blacklist regex entry defined"))
-			}
-			blacklistRegexEntries = append(blacklistRegexEntries, c.Val())
-			break
-		case "}":
-			break
-		case "{":
-			break
-		}
-	}
-
-	if len(blocklists) == 0 {
-		blocklists = defaultBlocklists
+	cfg, err := parsePluginConfiguration(c)
+	if err != nil {
+		return err
 	}
 
 	updater := &BlocklistUpdater{
-		Enabled:           enableAutoUpdate,
-		RetryCount:        renewalAttemptCount,
-		RetryDelay:        failureRetryDelay,
-		UpdateInterval:    renewalInterval,
+		Enabled:           cfg.EnableAutoUpdate,
+		RetryCount:        cfg.BlocklistRenewalRetryCount,
+		RetryDelay:        cfg.BlocklistRenewalRetryInterval,
+		UpdateInterval:    cfg.BlocklistRenewalInterval,
 		Plugin:            nil,
-		persistBlocklists: persistBlocklist,
-		persistencePath:   persistedBlocklistPath,
+		persistBlocklists: cfg.EnableBlocklistPersistence,
+		persistencePath:   cfg.BlocklistPersistencePath,
 	}
 
 	c.OnStartup(func() error {
@@ -172,34 +59,24 @@ func setup(c *caddy.Controller) error {
 
 	blockageMap := make(BlockMap, 0)
 
-	ruleset := BuildRuleset(whitelistEntries, blacklistEntries)
-
-	for _, v := range whitelistRegexEntries {
-		if err := ruleset.AddRegexToWhitelist(v); err != nil {
-			return err
-		}
-	}
-	for _, v := range blacklistRegexEntries {
-		if err := ruleset.AddRegexToBlacklist(v); err != nil {
-			return err
-		}
+	ruleset, err := buildRulesetFromConfig(cfg)
+	if err != nil {
+		return err
 	}
 
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
 		adsPlugin := DNSAdBlock{
 			Next:       next,
-			BlockLists: blocklists,
+			BlockLists: cfg.BlocklistURLs,
 			blockMap:   blockageMap,
-			RuleSet:    ruleset,
-			TargetIP:   targetIP,
-			TargetIPv6: targetIPv6,
-			LogBlocks:  logBlocks,
+			RuleSet:    *ruleset,
+			config:     cfg,
 		}
 
 		updater.Plugin = &adsPlugin
 
-		if !enableAutoUpdate {
+		if !cfg.EnableAutoUpdate {
 			adsPlugin.updater = updater
 		}
 
