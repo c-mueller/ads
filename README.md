@@ -66,6 +66,7 @@ You can see a more complex `ads` configuration in the following Corefile
         blacklist google.com
         whitelist googleadservices.com
         target 10.133.7.8
+        target-ipv6 ::1
    }
    # Other directives have been omitted
 }
@@ -76,7 +77,8 @@ You can see a more complex `ads` configuration in the following Corefile
 - `list <LIST URL>` HTTP(S)-URL to a hostlist to Block
 - `default-lists` Readds the default hostlists to the internal list of blocklists.
     - This command is needed if you want to add custom blocklists and you want to also use the default ones
-- `target <IPv4 IP>` defines the target ip to which blocked domains should resolve to
+- `target <IPv4 IP>` defines the target ip to which blocked domains should resolve to if a A record is requested
+- `target-ipv6 <IPv6 IP>` defines the target IPv6 address to which blocked domains should resolve to if a AAAA record is requested
 - `disable-auto-update` Turns off the automatic update of the blocklists every 24h (can be changed)
 - `log` Print a message every time a request gets blocked
 - `auto-update-interval <INTERVAL>` Allows the modification of the interval between blocklist updates

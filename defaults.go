@@ -24,4 +24,5 @@ var defaultBlocklists = []string{
 	"https://hosts-file.net/ad_servers.txt",
 }
 
-const defaultResolutionIP = "127.0.0.1"
+const defaultIPv4ResolutionIP = "127.0.0.1"
+const defaultIPv6ResolutionIP = "::1"

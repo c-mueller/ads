@@ -35,7 +35,8 @@ func setup(c *caddy.Controller) error {
 	c.Next()
 
 	blocklists := make([]string, 0)
-	targetIP := net.ParseIP(defaultResolutionIP)
+	targetIP := net.ParseIP(defaultIPv4ResolutionIP)
+	targetIPv6 := net.ParseIP(defaultIPv6ResolutionIP)
 	logBlocks := false
 
 	enableAutoUpdate := true
@@ -76,6 +77,15 @@ func setup(c *caddy.Controller) error {
 				return plugin.Error("ads", c.Err("Invalid target IP specified"))
 			}
 			targetIP = ip
+		case "target-ipv6":
+			if !c.NextArg() {
+				return plugin.Error("ads", c.Err("No target IP specified"))
+			}
+			ip := net.ParseIP(c.Val())
+			if ip == nil {
+				return plugin.Error("ads", c.Err("Invalid target IP specified"))
+			}
+			targetIPv6 = ip
 		case "disable-auto-update":
 			enableAutoUpdate = false
 			break
@@ -178,12 +188,13 @@ func setup(c *caddy.Controller) error {
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
 		adsPlugin := DNSAdBlock{
-			Next:        next,
-			BlockLists:  blocklists,
-			blockMap:    blockageMap,
-			RuleSet:     ruleset,
-			TargetIP:    targetIP,
-			LogBlocks:   logBlocks,
+			Next:       next,
+			BlockLists: blocklists,
+			blockMap:   blockageMap,
+			RuleSet:    ruleset,
+			TargetIP:   targetIP,
+			TargetIPv6: targetIPv6,
+			LogBlocks:  logBlocks,
 		}
 
 		updater.Plugin = &adsPlugin
