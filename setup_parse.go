@@ -15,8 +15,8 @@
 package ads
 
 import (
+	"github.com/caddyserver/caddy"
 	"github.com/coredns/coredns/plugin"
-	"github.com/mholt/caddy"
 	"net"
 	"strings"
 	"time"

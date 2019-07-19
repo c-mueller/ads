@@ -16,7 +16,7 @@ package ads
 
 import (
 	"fmt"
-	"github.com/mholt/caddy"
+	"github.com/caddyserver/caddy"
 	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
 	"testing"
