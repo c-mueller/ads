@@ -25,16 +25,20 @@ workspace:
 steps:
   - name: load-deps
     image: golang
+    environment:
+      GO111MODULE: on
     commands:
-      - go get -d ./...
-      - go get github.com/Flaque/filet
-      - go get github.com/stretchr/testify/assert
+      - go get -v -d github.com/coredns/coredns
+      - go get -v -d ./...
+      - go get -v github.com/Flaque/filet
+      - go get -v github.com/stretchr/testify/assert
   - name: build-coredns-amd64
     image: golang
+    environment:
+      GO111MODULE: on
     commands:
       - cd /go/src/github.com/coredns/coredns
       - git checkout $(git describe --tags --abbrev=0)
-      #- sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
       - sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
       - cat plugin.cfg
       - make
