@@ -10,7 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.#
+# limitations under the License.
 kind: pipeline
 name: linux-amd64
 
@@ -37,6 +37,8 @@ steps:
       #- sed -i 's|hosts:hosts|ads:github.com/c-mueller/ads\nhosts:hosts|g' plugin.cfg
       - sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
       - cat plugin.cfg
+      - make
+      - echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/c-mueller/ads" >> go.mod
       - make
       - mkdir /go/src/github.com/c-mueller/ads/binaries
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-amd64
@@ -79,4 +81,4 @@ steps:
 
 ---
 kind: signature
-hmac: cd28d00abfcc83fd26cc6532f7d8bb723b41e1412b45aef271a82b4d0720377f
+hmac: 98cd151f757f8e8b579b1ac9230ed5964058f738ab4345f38cd9019600255ee5

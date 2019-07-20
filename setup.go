@@ -30,6 +30,7 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
+	log.Info("Launching CoreDNS Ads Plugin")
 	c.Next()
 	cfg, err := parsePluginConfiguration(c)
 	if err != nil {

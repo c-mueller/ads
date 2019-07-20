@@ -37,6 +37,21 @@ Finally run `make` to build CoreDNS with the `ads` plugin
 The releases section also contains binaries of the latest CoreDNS with the
 ads plugin. These get built automatically using drone. Once they have been triggered.
 
+### Building development binaries
+
+First build the binaries once using the process described above to ensure the `go.mod` file is fully generated.
+
+Assuming the ads plugin is pulled in the appropriate path run the following command in the root of the CoreDNS binary:
+```
+For BASH:
+echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/c-mueller/ads" >> go.mod
+
+For Fish:
+echo "replace github.com/c-muéller/ads "(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "(go env GOPATH)"/src/c-mueller/ads" >> go.mod
+```
+
+After that just run `make` now CoreDNS should have complied with the version of the `ads` plugin you have currently checked out in the ads repository.
+
 ## Configuring
 
 ### Default settings
