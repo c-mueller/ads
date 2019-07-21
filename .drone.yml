@@ -25,10 +25,7 @@ workspace:
 steps:
   - name: load-deps
     image: golang
-    environment:
-      GO111MODULE: on
     commands:
-      - go get -v -d github.com/coredns/coredns
       - go get -v -d ./...
       - go get -v github.com/Flaque/filet
       - go get -v github.com/stretchr/testify/assert
@@ -40,9 +37,9 @@ steps:
       - cd /go/src/github.com/coredns/coredns
       - git checkout $(git describe --tags --abbrev=0)
       - sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
-      - cat plugin.cfg
       - make
-      - echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/c-mueller/ads" >> go.mod
+      - cd /go/src/github.com/coredns/coredns
+      - echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/github.com/c-mueller/ads" >> go.mod
       - make
       - mkdir /go/src/github.com/c-mueller/ads/binaries
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-amd64
@@ -56,6 +53,28 @@ steps:
     commands:
       - go test -coverprofile=coverage.txt -covermode=atomic -v ./...
       - curl -s https://codecov.io/bash | bash
+  - name: build-coredns-win
+    image: golang
+    environment:
+      GOOS: windows
+      GOARCH: amd64
+    commands:
+      - cd /go/src/github.com/coredns/coredns
+      - make
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-win.exe
+    when:
+      event: tag
+  - name: build-coredns-darwin
+    image: golang
+    environment:
+      GOOS: darwin
+      GOARCH: amd64
+    commands:
+      - cd /go/src/github.com/coredns/coredns
+      - make
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-darwin
+    when:
+       event: tag
   - name: build-coredns-arm
     image: golang
     environment:
@@ -65,6 +84,8 @@ steps:
       - cd /go/src/github.com/coredns/coredns
       - make
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-arm
+    when:
+      event: tag
   - name: build-coredns-arm64
     image: golang
     environment:
@@ -74,6 +95,18 @@ steps:
       - cd /go/src/github.com/coredns/coredns
       - make
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-arm64
+    when:
+      event: tag
+  - name: compute-hashsums
+    image: ubuntu:18.04
+    environment:
+      GOOS: linux
+      GOARCH: arm
+    commands:
+      - cd /go/src/github.com/c-mueller/ads/binaries/
+      - sha512sum * | tee hashsums.txt
+    when:
+      event: tag
   - name: publish
     image: plugins/github-release
     settings:
@@ -85,4 +118,4 @@ steps:
 
 ---
 kind: signature
-hmac: 12bf8d7ee6d32cc0bbe4ab025de1744847220b0ebbb4afaf42232343598238b7
+hmac: 5613731f6babcf9ee1bf05ddeff39522abde770f72613ab70a9215f231797f23
