@@ -52,6 +52,22 @@ echo "replace github.com/c-muéller/ads "(cat go.mod | grep 'github.com/c-muelle
 
 After that just run `make` now CoreDNS should have complied with the version of the `ads` plugin you have currently checked out in the ads repository.
 
+#### A note on `go modules`
+
+To prevent version conflicts between CoreDNS and the ads plugin it is important to keep the
+`go.mod` file empty or if dependencies have been added that are not used by coreDNS only these should
+be added in the `go.mod` file on master.
+For reference the empty `go.mod` file looks like this:
+```
+module github.com/c-mueller/ads
+
+go 1.12
+```
+
+The go sum file should get deleted.
+
+Because this strategy will make development annoying you can run `go mod tidy` to regenerate a proper `go,mod` file.
+
 ## Configuring
 
 ### Default settings
