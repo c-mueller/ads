@@ -1,29 +1,35 @@
-// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ads
 
 import (
+	"fmt"
 	"github.com/caddyserver/caddy"
 	"github.com/coredns/coredns/plugin"
 	"net"
-	"strings"
+	"net/url"
 	"time"
 )
 
 type adsPluginConfig struct {
-	BlocklistURLs       []string
+	BlacklistURLs       []string
+	WhitelistURLs       []string
+	BlacklistFiles      []string
+	WhitelistFiles      []string
 	BlacklistRules      []string
 	WhitelistRules      []string
 	RegexBlacklistRules []string
@@ -32,15 +38,18 @@ type adsPluginConfig struct {
 	TargetIP   net.IP
 	TargetIPv6 net.IP
 
-	BlocklistRenewalInterval      time.Duration
-	BlocklistRenewalRetryCount    int
-	BlocklistRenewalRetryInterval time.Duration
+	HttpListRenewalInterval  time.Duration
+	FileListRenewalInterval  time.Duration
+	ListRenewalRetryCount    int
+	ListRenewalRetryInterval time.Duration
 
-	BlocklistPersistencePath string
+	ListPersistencePath string
 
-	EnableLogging              bool
-	EnableAutoUpdate           bool
-	EnableBlocklistPersistence bool
+	EnableLogging         bool
+	EnableAutoUpdate      bool
+	EnableListPersistence bool
+
+	WriteNXDomain bool
 }
 
 func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
@@ -50,16 +59,37 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 
 		switch value {
 		case "default-lists":
-			config.BlocklistURLs = append(config.BlocklistURLs, defaultBlocklists...)
-		case "list":
+			config.BlacklistURLs = append(config.BlacklistURLs, defaultBlacklists...)
+		case "strict-default-lists":
+			config.BlacklistURLs = append(config.BlacklistURLs, strictDefaultBlacklists...)
+		case "blacklist":
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No URL found after list token"))
 			}
-			url := c.Val()
-			if !strings.HasPrefix(url, "http") || !strings.Contains(url, "://") {
-				return nil, plugin.Error("ads", c.Err("Invalid url"))
+			parsedUrl, err := url.Parse(c.Val())
+			if err != nil {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Invaild URL. Got error while parsing %s", err.Error())))
+			} else if parsedUrl.Scheme != "http" && parsedUrl.Scheme != "https" && parsedUrl.Scheme != "file" {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Invaild URL. The scheme %s is not supported!", parsedUrl.Scheme)))
+			} else if parsedUrl.Scheme == "http" || parsedUrl.Scheme == "https" {
+				config.BlacklistURLs = append(config.BlacklistURLs, c.Val())
+			} else {
+				config.BlacklistFiles = append(config.BlacklistFiles, parsedUrl.Path)
 			}
-			config.BlocklistURLs = append(config.BlocklistURLs, url)
+		case "whitelist":
+			if !c.NextArg() {
+				return nil, plugin.Error("ads", c.Err("No URL found after list token"))
+			}
+			parsedUrl, err := url.Parse(c.Val())
+			if err != nil {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Invaild URL. Got error while parsing %s", err.Error())))
+			} else if parsedUrl.Scheme != "http" && parsedUrl.Scheme != "https" && parsedUrl.Scheme != "file" {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Invaild URL. The scheme %s is not supported!", parsedUrl.Scheme)))
+			} else if parsedUrl.Scheme == "http" || parsedUrl.Scheme == "https" {
+				config.WhitelistURLs = append(config.WhitelistURLs, c.Val())
+			} else {
+				config.WhitelistFiles = append(config.WhitelistFiles, parsedUrl.Path)
+			}
 		case "target":
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No target IP specified"))
@@ -89,46 +119,49 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 			if err != nil {
 				return nil, plugin.Error("ads", err)
 			}
-			config.BlocklistRenewalRetryInterval = i
+			config.ListRenewalRetryInterval = i
 			break
 			//TODO Add Options for Failure Retry interval and Failure retry count
-		case "blocklist-file":
+		case "list-store":
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No filepath for blocklist persistency defined"))
 			}
-			if config.EnableBlocklistPersistence {
+			if config.EnableListPersistence {
 				return nil, plugin.Error("ads", c.Err("Only one filepath for blocklist persistency can be defined"))
 			}
 			path := c.Val()
 			//TODO implement check if path is valid
-			config.EnableBlocklistPersistence = true
-			config.BlocklistPersistencePath = path
+			config.EnableListPersistence = true
+			config.ListPersistencePath = path
 			break
 		case "log":
 			config.EnableLogging = true
-		case "whitelist":
+		case "block":
 			if !c.NextArg() {
-				return nil, plugin.Error("ads", c.Err("No name for whitelist entry defined"))
-			}
-			config.WhitelistRules = append(config.WhitelistRules, c.Val())
-			break
-		case "blacklist":
-			if !c.NextArg() {
-				return nil, plugin.Error("ads", c.Err("No name for blacklist entry defined"))
+				return nil, plugin.Error("ads", c.Err("No name for blacklist (block) entry defined"))
 			}
 			config.BlacklistRules = append(config.BlacklistRules, c.Val())
 			break
-		case "whitelist-regex":
+		case "block-regex":
 			if !c.NextArg() {
-				return nil, plugin.Error("ads", c.Err("No name for whitelist regex entry defined"))
+				return nil, plugin.Error("ads", c.Err("No name for blacklist regex (block-regex) entry defined"))
+			}
+			config.RegexBlacklistRules = append(config.RegexBlacklistRules, c.Val())
+			break
+		case "permit":
+			if !c.NextArg() {
+				return nil, plugin.Error("ads", c.Err("No name for whitelist (permit) entry defined"))
+			}
+			config.WhitelistRules = append(config.WhitelistRules, c.Val())
+			break
+		case "permit-regex":
+			if !c.NextArg() {
+				return nil, plugin.Error("ads", c.Err("No name for whitelist regex (permit-regex) entry defined"))
 			}
 			config.RegexBlacklistRules = append(config.RegexWhitelistRules, c.Val())
 			break
-		case "blacklist-regex":
-			if !c.NextArg() {
-				return nil, plugin.Error("ads", c.Err("No name for blacklist regex entry defined"))
-			}
-			config.RegexBlacklistRules = append(config.RegexBlacklistRules, c.Val())
+		case "nxdomain":
+			config.WriteNXDomain = true
 			break
 		case "}":
 			break
@@ -137,13 +170,13 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 		}
 	}
 
-	if len(config.BlocklistURLs) == 0 {
-		config.BlocklistURLs = defaultBlocklists
+	if len(config.BlacklistURLs) == 0 {
+		config.BlacklistURLs = defaultBlacklists
 	}
 	return &config, nil
 }
 
-func buildRulesetFromConfig(cfg *adsPluginConfig) (*RuleSet, error) {
+func buildRulesetFromConfig(cfg *adsPluginConfig) (*ConfiguredRuleSet, error) {
 	ruleset := BuildRuleset(cfg.WhitelistRules, cfg.BlacklistRules)
 
 	for _, v := range cfg.RegexWhitelistRules {

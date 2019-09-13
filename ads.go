@@ -1,16 +1,18 @@
-// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ads
 
@@ -29,24 +31,34 @@ var log = clog.NewWithPlugin("ads")
 
 type DNSAdBlock struct {
 	Next       plugin.Handler
-	BlockLists []string
-	RuleSet    RuleSet
-	blockMap   BlockMap
-	updater    *BlocklistUpdater
+	RuleSet    ConfiguredRuleSet
+	blacklist  ListMap
+	whitelist  ListMap
+	updater    *ListUpdater
 	config     *adsPluginConfig
+}
+
+func (e *DNSAdBlock) IsWhitelisted(qname string) bool {
+	return e.whitelist[qname] || e.RuleSet.IsWhitelisted(qname)
+}
+func (e *DNSAdBlock) IsBlacklisted(qname string) bool {
+	return e.blacklist[qname] || e.RuleSet.IsBlacklisted(qname)
+}
+func (e *DNSAdBlock) ShouldBlock(qname string) bool {
+	return !e.IsWhitelisted(qname) && e.IsBlacklisted(qname)
 }
 
 func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (int, error) {
 	state := request.Request{W: w, Req: r}
 
-	qname := state.Name()
+	trimmedQname := state.Name()
 
-	qname = strings.TrimSuffix(qname, ".")
+	trimmedQname = strings.TrimSuffix(trimmedQname, ".")
 
 	requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 	requestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
-	if !e.RuleSet.IsWhitelisted(qname) && (e.blockMap[qname] || e.RuleSet.IsBlacklisted(qname)) {
+	if e.ShouldBlock(trimmedQname) {
 		var answers []dns.RR
 		if state.QType() == dns.TypeAAAA {
 			answers = aaaa(state.Name(), []net.IP{e.config.TargetIPv6})
@@ -65,7 +77,7 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 		blockedRequestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
 		if e.config.EnableLogging {
-			log.Infof("Blocked request %q from %q", qname, state.IP())
+			log.Infof("Blocked request %q from %q", trimmedQname, state.IP())
 		}
 
 		return dns.RcodeSuccess, nil

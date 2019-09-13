@@ -1,16 +1,18 @@
-// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ads
 
@@ -37,14 +39,14 @@ func setup(c *caddy.Controller) error {
 		return err
 	}
 
-	updater := &BlocklistUpdater{
-		Enabled:           cfg.EnableAutoUpdate,
-		RetryCount:        cfg.BlocklistRenewalRetryCount,
-		RetryDelay:        cfg.BlocklistRenewalRetryInterval,
-		UpdateInterval:    cfg.BlocklistRenewalInterval,
-		Plugin:            nil,
-		persistBlocklists: cfg.EnableBlocklistPersistence,
-		persistencePath:   cfg.BlocklistPersistencePath,
+	updater := &ListUpdater{
+		Enabled:         cfg.EnableAutoUpdate,
+		RetryCount:      cfg.ListRenewalRetryCount,
+		RetryDelay:      cfg.ListRenewalRetryInterval,
+		UpdateInterval:  cfg.HttpListRenewalInterval,
+		Plugin:          nil,
+		persistLists:    cfg.EnableListPersistence,
+		persistencePath: cfg.ListPersistencePath,
 	}
 
 	c.OnStartup(func() error {
@@ -58,7 +60,7 @@ func setup(c *caddy.Controller) error {
 		return nil
 	})
 
-	blockageMap := make(BlockMap, 0)
+	blockageMap := make(ListMap, 0)
 
 	ruleset, err := buildRulesetFromConfig(cfg)
 	if err != nil {
@@ -69,8 +71,8 @@ func setup(c *caddy.Controller) error {
 
 		adsPlugin := DNSAdBlock{
 			Next:       next,
-			BlockLists: cfg.BlocklistURLs,
-			blockMap:   blockageMap,
+			Blacklists: cfg.BlacklistURLs,
+			blacklist:  blockageMap,
 			RuleSet:    *ruleset,
 			config:     cfg,
 		}
@@ -87,10 +89,10 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
-func persistLoadedBlocklist(updater *BlocklistUpdater, enableAutoUpdate bool, blocklists []string, blockageMap BlockMap, persistedBlocklistPath string) {
+func persistLoadedBlocklist(updater *ListUpdater, enableAutoUpdate bool, blocklists []string, blockageMap ListMap, persistedBlocklistPath string) {
 	updater.lastPersistenceUpdate = time.Now()
 	if enableAutoUpdate {
-		persistedBlocklist := StoredBlocklistConfiguration{
+		persistedBlocklist := StoredListConfiguration{
 			UpdateTimestamp: int(time.Now().Unix()),
 			Blocklists:      blocklists,
 			BlockedNames:    blockageMap,

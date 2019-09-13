@@ -1,16 +1,18 @@
-// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ads
 
@@ -221,8 +223,8 @@ func initBlockedTestCases() []test.Case {
 	return testCases
 }
 
-func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
-	blockmap := make(BlockMap, 0)
+func initTestPlugin(t testing.TB, rs ConfiguredRuleSet) *DNSAdBlock {
+	blockmap := make(ListMap, 0)
 	for i := 0; i < 100; i++ {
 		blockmap[fmt.Sprintf("testhost-%09d.local.test.tld", i+1)] = true
 	}
@@ -234,8 +236,8 @@ func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
 
 	p := DNSAdBlock{
 		Next:       nxDomainHandler(),
-		blockMap:   blockmap,
-		BlockLists: []string{"http://localhost:8080/mylist.txt"},
+		blacklist:  blockmap,
+		Blacklists: []string{"http://localhost:8080/mylist.txt"},
 		RuleSet:    rs,
 		updater:    nil,
 		config:     &cfg,
@@ -244,7 +246,7 @@ func initTestPlugin(t testing.TB, rs RuleSet) *DNSAdBlock {
 	return &p
 }
 
-func getEmptyRuleset() RuleSet {
+func getEmptyRuleset() ConfiguredRuleSet {
 	return BuildRuleset(make([]string, 0), make([]string, 0))
 }
 
