@@ -39,18 +39,24 @@ ads plugin. These get built automatically using drone. Once they have been trigg
 
 ### Building development binaries
 
-First build the binaries once using the process described above to ensure the `go.mod` file is fully generated.
+Building untagged code is complicated. The simplest way i've stumbled upon for CoreDNS is mimicing a in tree plugin using symlinks.
 
-Assuming the ads plugin is pulled in the appropriate path run the following command in the root of the CoreDNS binary:
+For this you have to create a symlink to the `ads` repository in the `plugins/` folder using a command similar to the following:
+Assuming you are in the `plugins/` directory
+
 ```
-For BASH:
-echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/github.com/c-mueller/ads" >> go.mod
-
-For Fish:
-echo "replace github.com/c-muéller/ads "(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "(go env GOPATH)"/src/github.com/c-mueller/ads" >> go.mod
+ln -s ~/go/src/github.com/c-mueller/ads ads
 ```
 
-After that just run `make` now CoreDNS should have complied with the version of the `ads` plugin you have currently checked out in the ads repository.
+Make sure to replace `~/go/src/github.com/c-mueller/ads` with the proper path to the `ads` repo.
+
+Next we have to insert the plugin into the `plugin.cfg`. here we use the following command, instead of the one above:
+```
+sed -i 's|loadbalance:loadbalance|ads:ads\nloadbalance:loadbalance|g' plugin.cfg
+```
+
+Before running make in the CoreDNS repo we have to make sure the `ads` repo does not contain a `go.mod` file. to do this we rename it to `go.mod.old`.
+If you want to continue developing using Goland for example. The file should be renamed again to make sure syntax highlighting works.
 
 #### A note on `go modules`
 
@@ -70,6 +76,9 @@ Because this strategy will make development annoying you can run `go mod tidy` t
 
 ## Configuring
 
+The following shows how to use the ads plugin with default parameters, if you want to configure it further take a look at
+[This Document](docs/configuration.md).
+
 ### Default settings
 
 Running the `ads` plugin with all defaults is done by just adding the `ads` keyword to your Corefile.
@@ -84,41 +93,6 @@ For example:
 }
 ```
 
-### Configuring the `ads` plugin
+## License
 
-You can see a more complex `ads` configuration in the following Corefile
-
-```
-.:53 {
-   ads {
-        list http://url-to-my-blocklists.com/list1.txt
-        list http://url-to-my-blocklists.com/list2.txt
-        default-lists
-        blacklist google.com
-        whitelist googleadservices.com
-        target 10.133.7.8
-        target-ipv6 ::1
-   }
-   # Other directives have been omitted
-}
-```
-
-#### Configuration options
-
-- `list <LIST URL>` HTTP(S)-URL to a hostlist to Block
-- `default-lists` Readds the default hostlists to the internal list of blocklists.
-    - This command is needed if you want to add custom blocklists and you want to also use the default ones
-- `target <IPv4 IP>` defines the target ip to which blocked domains should resolve to if a A record is requested
-- `target-ipv6 <IPv6 IP>` defines the target IPv6 address to which blocked domains should resolve to if a AAAA record is requested
-- `disable-auto-update` Turns off the automatic update of the blocklists every 24h (can be changed)
-- `log` Print a message every time a request gets blocked
-- `auto-update-interval <INTERVAL>` Allows the modification of the interval between blocklist updates
-    - This operation uses Golangs `time.ParseDuration()` function in order to parse the duration.
-    Please ensure the specified duration can be parsed by this operation. Please refer to [here](https://golang.org/pkg/time/#ParseDuration).
-    - This gets ignored if the automatic blocklist updates have been disabled
-- `blocklist-path <FILEPATH FOR PERSISTED BLOCKLIST>` This option enables persisting of the blocklist
-  to prevent a automatic redownload everytime CoreDNS restarts. The lists get persisted everytime a update get performed.
-    - If autoupdates have been turned off the list will be reloaded every time the application launches.
-    Making this option pretty useless for this kind of configuration.
-- `whitelist <QNAME>` and `blacklist <QNAME>` Allows the explicit whitelisting or blacklisting of specific qnames. If a qname is on the whitelist it will not be blocked. 
-- `whitelist-regex <REGEX>` and `blacklist-regex <REGEX>` identical to the regular whitelist and blacklist options. But instead of blocking a specific qname blocking is done for a regular expression. Yo might want to define exceptions to a regex blacklist entry. This can be done by using eitehr the `whitelist` or `whitelist-regex` options. 
+This plugin is licensed under Apache 2 License. See [LICENSE](LICENSE) for more information.
