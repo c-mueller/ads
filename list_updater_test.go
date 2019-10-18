@@ -1,16 +1,18 @@
-// Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package ads
 
@@ -36,10 +38,10 @@ func TestBlocklistUpdater(t *testing.T) {
 
 	p := initTestPlugin(t, getEmptyRuleset())
 
-	p.BlockLists = []string{url}
-	p.blockMap = make(BlockMap, 0)
+	p.config.BlacklistURLs = []string{url}
+	p.blacklist = make(ListMap, 0)
 
-	updater := BlocklistUpdater{
+	updater := ListUpdater{
 		Enabled:        true,
 		Plugin:         p,
 		UpdateInterval: time.Second * 2,
@@ -52,21 +54,21 @@ func TestBlocklistUpdater(t *testing.T) {
 	p.updater.Start()
 
 	time.Sleep(time.Second * 1)
-	assert.Equal(t, 1000, len(p.blockMap))
+	assert.Equal(t, 1000, len(p.blacklist))
 
 	time.Sleep(time.Second * 5)
-	assert.Equal(t, 2000, len(p.blockMap))
+	assert.Equal(t, 2000, len(p.blacklist))
 
-	p.updater.updateTicker.Stop()
+	p.updater.httpUpdateTicker.Stop()
 }
 
 func TestBlocklistUpdaterWithBadList(t *testing.T) {
 	p := initTestPlugin(t, getEmptyRuleset())
 
-	p.BlockLists = []string{"https://badhost/doesnotexist"}
-	p.blockMap = make(BlockMap, 0)
+	p.config.BlacklistURLs = []string{"https://badhost/doesnotexist"}
+	p.blacklist = make(ListMap, 0)
 
-	updater := BlocklistUpdater{
+	updater := ListUpdater{
 		Enabled:        false,
 		Plugin:         p,
 		UpdateInterval: time.Second * 2,
@@ -79,7 +81,7 @@ func TestBlocklistUpdaterWithBadList(t *testing.T) {
 
 	// give it time to fail
 	time.Sleep(time.Second * 6)
-	assert.Equal(t, 0, len(p.blockMap))
+	assert.Equal(t, 0, len(p.blacklist))
 }
 
 func initTestServer(t *testing.T) *httptest.Server {
