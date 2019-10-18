@@ -170,11 +170,22 @@ func TestLookup_Block(t *testing.T) {
 	resolveTestCases(testCases, p, ctx, t)
 }
 
+func TestLookup_Block_NXDomain(t *testing.T) {
+	p := initTestPlugin(t, getEmptyRuleset())
+	//p.config.WriteNXDomain = true
+	ctx := context.TODO()
+
+	testCases := initBlockedTestCases()
+
+	resolveTestCases(testCases, p, ctx, t)
+}
+
 func TestLookup_Allow(t *testing.T) {
 	p := initTestPlugin(t, getEmptyRuleset())
 	ctx := context.TODO()
 
 	testCases := initAllowedTestCases()
+
 
 	resolveTestCases(testCases, p, ctx, t)
 }
@@ -235,12 +246,11 @@ func initTestPlugin(t testing.TB, rs ConfiguredRuleSet) *DNSAdBlock {
 	cfg.EnableLogging = true
 
 	p := DNSAdBlock{
-		Next:       nxDomainHandler(),
-		blacklist:  blockmap,
-		Blacklists: []string{"http://localhost:8080/mylist.txt"},
-		RuleSet:    rs,
-		updater:    nil,
-		config:     &cfg,
+		Next:              nxDomainHandler(),
+		blacklist:         blockmap,
+		ConfiguredRuleSet: rs,
+		updater:           nil,
+		config:            &cfg,
 	}
 
 	return &p

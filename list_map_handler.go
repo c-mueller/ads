@@ -32,7 +32,7 @@ var ValidateQName = regexp.MustCompile("([a-zA-Z0-9]|\\.|-)*").MatchString
 func GenerateListMap(urls []string, fetchFunc func(ref string) ([]byte, error)) (ListMap, error) {
 	listMap := make(ListMap, 0)
 	for _, listUrl := range urls {
-		log.Infof("Fetching list %q...", listUrl)
+		log.Debugf("Fetching list %q...", listUrl)
 
 		data, err := fetchFunc(listUrl)
 		if err != nil {
@@ -40,7 +40,7 @@ func GenerateListMap(urls []string, fetchFunc func(ref string) ([]byte, error)) 
 		}
 		parseListFile(data, listMap)
 	}
-	log.Infof("Found %d unique domains to in list", len(listMap))
+	log.Debugf("Found %d unique domains in list", len(listMap))
 	return listMap, nil
 }
 
@@ -120,7 +120,7 @@ func parseListFile(data []byte, blockageMap ListMap) {
 			urlCount++
 		}
 	}
-	log.Infof("Fetched %d entries.", urlCount)
+	log.Debugf("Fetched %d entries.", urlCount)
 }
 
 func cleanHostsLine(line string) string {

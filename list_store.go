@@ -25,8 +25,10 @@ import (
 
 type StoredListConfiguration struct {
 	UpdateTimestamp int      `json:"update_timestamp"`
-	Blocklists      []string `json:"blocklists"`
-	BlockedNames    ListMap  `json:"blocked_names"`
+	BlacklistURLs   []string `json:"blacklist_urls"`
+	WhitelistURLs   []string `json:"whitelist_urls"`
+	Blacklist       ListMap  `json:"blacklist"`
+	Whitelist       ListMap  `json:"whitelist"`
 }
 
 func ReadListConfiguration(path string) (*StoredListConfiguration, error) {

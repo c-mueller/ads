@@ -68,14 +68,14 @@ func initBenchPlugin(t testing.TB) *DNSAdBlock {
 		blockmap[fmt.Sprintf("testhost-%09d.local.test.tld", i+1)] = true
 	}
 	cfg := defaultConfigWithoutRules
+	cfg.BlacklistURLs = []string{"http://localhost:8080/mylist.txt"}
 	cfg.TargetIP = net.ParseIP("10.1.33.7")
 
 	p := DNSAdBlock{
-		Next:       nxDomainHandler(),
-		blacklist:  blockmap,
-		Blacklists: []string{"http://localhost:8080/mylist.txt"},
-		updater:    nil,
-		config:     &cfg,
+		Next:      nxDomainHandler(),
+		blacklist: blockmap,
+		updater:   nil,
+		config:    &cfg,
 	}
 
 	return &p

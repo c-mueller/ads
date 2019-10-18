@@ -32,7 +32,10 @@ func init() {
 }
 
 func setup(c *caddy.Controller) error {
-	log.Info("Launching CoreDNS Ads Plugin")
+	// Modify based on current version
+	// Currently no (useful) automated procedure known
+	// ToDo Investigate automated options for this
+	log.Info("Initializing CoreDNS 'ads' plugin. Version 0.2.0")
 	c.Next()
 	cfg, err := parsePluginConfiguration(c)
 	if err != nil {
@@ -60,7 +63,8 @@ func setup(c *caddy.Controller) error {
 		return nil
 	})
 
-	blockageMap := make(ListMap, 0)
+	bl := make(ListMap, 0)
+	wl := make(ListMap, 0)
 
 	ruleset, err := buildRulesetFromConfig(cfg)
 	if err != nil {
@@ -70,11 +74,12 @@ func setup(c *caddy.Controller) error {
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 
 		adsPlugin := DNSAdBlock{
-			Next:       next,
-			Blacklists: cfg.BlacklistURLs,
-			blacklist:  blockageMap,
-			RuleSet:    *ruleset,
-			config:     cfg,
+			Next:              next,
+			ConfiguredRuleSet: *ruleset,
+			FileRuleSet:       *NewFileRuleSet(cfg.WhitelistFiles, cfg.BlacklistFiles),
+			blacklist:         bl,
+			whitelist:         wl,
+			config:            cfg,
 		}
 
 		updater.Plugin = &adsPlugin
@@ -89,14 +94,16 @@ func setup(c *caddy.Controller) error {
 	return nil
 }
 
-func persistLoadedBlocklist(updater *ListUpdater, enableAutoUpdate bool, blocklists []string, blockageMap ListMap, persistedBlocklistPath string) {
-	updater.lastPersistenceUpdate = time.Now()
-	if enableAutoUpdate {
+func (u *ListUpdater) persistLoadedHttpLists() {
+	u.lastPersistenceUpdate = time.Now()
+	if u.Enabled {
 		persistedBlocklist := StoredListConfiguration{
 			UpdateTimestamp: int(time.Now().Unix()),
-			Blocklists:      blocklists,
-			BlockedNames:    blockageMap,
+			BlacklistURLs:   u.Plugin.config.BlacklistURLs,
+			WhitelistURLs:   u.Plugin.config.WhitelistURLs,
+			Blacklist:       u.Plugin.blacklist,
+			Whitelist:       u.Plugin.whitelist,
 		}
-		persistedBlocklist.Persist(persistedBlocklistPath)
+		persistedBlocklist.Persist(u.persistencePath)
 	}
 }

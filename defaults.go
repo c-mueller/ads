@@ -77,28 +77,29 @@ const defaultIPv4ResolutionIP = "127.0.0.1"
 const defaultIPv6ResolutionIP = "::1"
 
 var defaultConfigWithoutRules = adsPluginConfig{
-	BlacklistURLs:            []string{},
-	WhitelistURLs:            []string{},
+	BlacklistURLs: []string{},
+	WhitelistURLs: []string{},
 
-	BlacklistFiles:           []string{},
-	WhitelistFiles:           []string{},
+	BlacklistFiles: []string{},
+	WhitelistFiles: []string{},
 
-	BlacklistRules:           []string{},
-	WhitelistRules:           []string{},
+	BlacklistRules: []string{},
+	WhitelistRules: []string{},
 
-	RegexBlacklistRules:      []string{},
-	RegexWhitelistRules:      []string{},
+	RegexBlacklistRules: []string{},
+	RegexWhitelistRules: []string{},
 
-	TargetIP:                 net.ParseIP(defaultIPv4ResolutionIP),
-	TargetIPv6:               net.ParseIP(defaultIPv6ResolutionIP),
+	TargetIP:   net.ParseIP(defaultIPv4ResolutionIP),
+	TargetIPv6: net.ParseIP(defaultIPv6ResolutionIP),
 
 	HttpListRenewalInterval:  time.Hour * 24,
+	FileListRenewalInterval:  time.Minute,
 	ListRenewalRetryCount:    5,
 	ListRenewalRetryInterval: time.Minute,
 
-	ListPersistencePath:      "",
-	EnableLogging:            false,
-	EnableAutoUpdate:         true,
-	EnableListPersistence:    false,
-	WriteNXDomain:            false,
+	ListPersistencePath:   "",
+	EnableLogging:         false,
+	EnableAutoUpdate:      true,
+	EnableListPersistence: false,
+	WriteNXDomain:         false,
 }

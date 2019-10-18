@@ -38,7 +38,7 @@ func TestBlocklistUpdater(t *testing.T) {
 
 	p := initTestPlugin(t, getEmptyRuleset())
 
-	p.Blacklists = []string{url}
+	p.config.BlacklistURLs = []string{url}
 	p.blacklist = make(ListMap, 0)
 
 	updater := ListUpdater{
@@ -59,13 +59,13 @@ func TestBlocklistUpdater(t *testing.T) {
 	time.Sleep(time.Second * 5)
 	assert.Equal(t, 2000, len(p.blacklist))
 
-	p.updater.updateTicker.Stop()
+	p.updater.httpUpdateTicker.Stop()
 }
 
 func TestBlocklistUpdaterWithBadList(t *testing.T) {
 	p := initTestPlugin(t, getEmptyRuleset())
 
-	p.Blacklists = []string{"https://badhost/doesnotexist"}
+	p.config.BlacklistURLs = []string{"https://badhost/doesnotexist"}
 	p.blacklist = make(ListMap, 0)
 
 	updater := ListUpdater{

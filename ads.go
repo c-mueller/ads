@@ -17,6 +17,7 @@
 package ads
 
 import (
+	"fmt"
 	"github.com/coredns/coredns/plugin"
 	"github.com/coredns/coredns/plugin/metrics"
 	clog "github.com/coredns/coredns/plugin/pkg/log"
@@ -30,19 +31,20 @@ import (
 var log = clog.NewWithPlugin("ads")
 
 type DNSAdBlock struct {
-	Next       plugin.Handler
-	RuleSet    ConfiguredRuleSet
-	blacklist  ListMap
-	whitelist  ListMap
-	updater    *ListUpdater
-	config     *adsPluginConfig
+	Next              plugin.Handler
+	ConfiguredRuleSet ConfiguredRuleSet
+	FileRuleSet       UpdateableRuleset
+	blacklist         ListMap
+	whitelist         ListMap
+	updater           *ListUpdater
+	config            *adsPluginConfig
 }
 
 func (e *DNSAdBlock) IsWhitelisted(qname string) bool {
-	return e.whitelist[qname] || e.RuleSet.IsWhitelisted(qname)
+	return e.whitelist[qname] || e.ConfiguredRuleSet.IsWhitelisted(qname) || e.FileRuleSet.IsWhitelisted(qname)
 }
 func (e *DNSAdBlock) IsBlacklisted(qname string) bool {
-	return e.blacklist[qname] || e.RuleSet.IsBlacklisted(qname)
+	return e.blacklist[qname] || e.ConfiguredRuleSet.IsBlacklisted(qname) || e.FileRuleSet.IsBlacklisted(qname)
 }
 func (e *DNSAdBlock) ShouldBlock(qname string) bool {
 	return !e.IsWhitelisted(qname) && e.IsBlacklisted(qname)
@@ -59,8 +61,12 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 	requestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
 	if e.ShouldBlock(trimmedQname) {
+		blockedRequestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
+		blockedRequestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 		var answers []dns.RR
-		if state.QType() == dns.TypeAAAA {
+		if e.config.WriteNXDomain {
+			answers = nxdomain(state.Name())
+		} else if state.QType() == dns.TypeAAAA {
 			answers = aaaa(state.Name(), []net.IP{e.config.TargetIPv6})
 		} else {
 			answers = a(state.Name(), []net.IP{e.config.TargetIP})
@@ -72,9 +78,6 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 		m.Answer = answers
 
 		w.WriteMsg(m)
-
-		blockedRequestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
-		blockedRequestCountBySource.WithLabelValues(metrics.WithServer(ctx), state.IP()).Inc()
 
 		if e.config.EnableLogging {
 			log.Infof("Blocked request %q from %q", trimmedQname, state.IP())
@@ -111,4 +114,10 @@ func aaaa(zone string, ips []net.IP) []dns.RR {
 		answers = append(answers, r)
 	}
 	return answers
+}
+
+func nxdomain(zone string) []dns.RR {
+	s := fmt.Sprintf("%s 60 IN SOA ns1.%s postmaster.%s 1524370381 14400 3600 604800 60", zone, zone, zone)
+	soa, _ := dns.NewRR(s)
+	return []dns.RR{soa}
 }

@@ -43,13 +43,13 @@ const invalid_Target_InvalidIP_Corefile = `ads {
 }`
 
 const valid_List_Corefile = `ads {
-  list %s/list.txt
+  blacklist http://%s/list.txt
 }`
 const invalid_List_MissingURL_Corefile = `ads {
-  list
+  blacklist
 }`
 const invalid_List_InvalidURL_Corefile = `ads {
-  list not-a-valid-url
+  blacklist not-a-valid-url
 }`
 
 const valid_Interval_Corefile = `ads {
@@ -63,63 +63,63 @@ const invalid_Interval_InvalidDuration_Corefile = `ads {
 }`
 
 const valid_Whitelist_Single = `ads {
-  whitelist test.com
+  block test.com
 }`
 const valid_Whitelist_Multi = `ads {
-  whitelist test.com
-  whitelist test.xyz
+  block test.com
+  block test.xyz
 }`
 const valid_Blacklist_Single = `ads {
-  blacklist test.com
+  block test.com
 }`
 const valid_Blacklist_Multi = `ads {
-  blacklist test.com
-  blacklist test.xyz
+  block test.com
+  block test.xyz
 }`
 
 const invalid_Whitelist_Single = `ads {
-  whitelist
+  permit
 }`
 const invalid_Whitelist_Multi = `ads {
-  whitelist test.com
-  whitelist
+  permit test.com
+  permit
 }`
 const invalid_Blacklist_Single = `ads {
-  blacklist
+  block
 }`
 const invalid_Blacklist_Multi = `ads {
-  blacklist test.com
-  blacklist
+  block test.com
+  block
 }`
 
 const valid_Regex_Whitelist_Single = `ads {
-  whitelist-regex (^|\.)local\.c-mueller\.de$
+  permit-regex (^|\.)local\.c-mueller\.de$
 }`
 const valid_Regex_Whitelist_Multi = `ads {
-  whitelist-regex (^|\.)local\.c-mueller\.de$
-  whitelist-regex (^|\.)local\.c-mueller\.xyz$
+  permit-regex (^|\.)local\.c-mueller\.de$
+  permit-regex (^|\.)local\.c-mueller\.xyz$
 }`
 const valid_Regex_Blacklist_Single = `ads {
-  blacklist-regex (^|\.)local\.c-mueller\.de$
+  block-regex (^|\.)local\.c-mueller\.de$
 }`
 const valid_Regex_Blacklist_Multi = `ads {
-  blacklist-regex (^|\.)local\.c-mueller\.de$
-  blacklist-regex (^|\.)local\.c-mueller\.xyz$
+  block-regex (^|\.)local\.c-mueller\.de$
+  block-regex (^|\.)local\.c-mueller\.xyz$
 }`
 
 const invalid_Regex_Whitelist_Single = `ads {
-  whitelist-regex
+  permit-regex
 }`
 const invalid_Regex_Whitelist_Multi = `ads {
-  whitelist-regex (^|\.)local\.c-mueller\.de$
-  whitelist-regex
+  permit-regex (^|\.)local\.c-mueller\.de$
+  permit-regex
 }`
 const invalid_Regex_Blacklist_Single = `ads {
-  blacklist-regex
+  block-regex
 }`
 const invalid_Regex_Blacklist_Multi = `ads {
-  blacklist-regex (^|\.)local\.c-mueller\.de$
-  blacklist-regex
+  block-regex (^|\.)local\.c-mueller\.de$
+  block-regex
 }`
 
 func TestSetup_Initialisation(t *testing.T) {

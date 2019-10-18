@@ -35,8 +35,8 @@ func Test_Blockfile_Write_Read(t *testing.T) {
 	t.Log(datapath)
 
 	config := StoredListConfiguration{
-		BlockedNames:    m,
-		Blocklists:      []string{"http://localhost:8888/blocklist.txt"},
+		Blacklist:       m,
+		BlacklistURLs:   []string{"http://localhost:8888/blocklist.txt"},
 		UpdateTimestamp: int(time.Now().Unix()),
 	}
 
@@ -47,8 +47,8 @@ func Test_Blockfile_Write_Read(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, config.UpdateTimestamp, reloadedConfig.UpdateTimestamp)
-	assert.Equal(t, config.Blocklists, reloadedConfig.Blocklists)
-	assert.Equal(t, config.BlockedNames, reloadedConfig.BlockedNames)
+	assert.Equal(t, config.BlacklistURLs, reloadedConfig.BlacklistURLs)
+	assert.Equal(t, config.Blacklist, reloadedConfig.Blacklist)
 }
 
 func loadBlockMap(t *testing.T) (ListMap) {

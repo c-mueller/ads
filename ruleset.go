@@ -18,11 +18,31 @@ package ads
 
 import "regexp"
 
+type IRuleset interface {
+	IsBlacklisted(qn string) bool
+	IsWhitelisted(qn string) bool
+}
+
 type UpdateableRuleset struct {
-	Blacklist      map[string]bool
-	Whitelist      map[string]bool
+	Blacklist        map[string]bool
+	Whitelist        map[string]bool
 	BlacklistSources []string
 	WhitelistSources []string
+}
+
+func NewFileRuleSet(whitelist, blacklist []string) *UpdateableRuleset {
+	return &UpdateableRuleset{
+		BlacklistSources: blacklist,
+		WhitelistSources: whitelist,
+	}
+}
+
+func (u *UpdateableRuleset) IsBlacklisted(qn string) bool {
+	return u.Blacklist[qn]
+}
+
+func (u *UpdateableRuleset) IsWhitelisted(qn string) bool {
+	return u.Whitelist[qn]
 }
 
 type ConfiguredRuleSet struct {
@@ -50,7 +70,6 @@ func BuildRuleset(whitelist, blacklist []string) ConfiguredRuleSet {
 
 	return r
 }
-
 
 func (r *ConfiguredRuleSet) AddRegexToWhitelist(regex string) error {
 	exp, err := regexp.Compile(regex)

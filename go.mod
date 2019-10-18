@@ -1,6 +1,6 @@
 module github.com/c-mueller/ads
 
-go 1.12
+go 1.13
 
 require (
 	github.com/Flaque/filet v0.0.0-20190209224823-fc4d33cfcf93

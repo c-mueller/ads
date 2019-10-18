@@ -33,71 +33,99 @@ type ListUpdater struct {
 	persistencePath       string
 	lastPersistenceUpdate time.Time
 
-	updateTicker *time.Ticker
-	lastUpdate   *time.Time
+	httpUpdateTicker *time.Ticker
+	fileUpdateTicker *time.Ticker
+	lastUpdate       *time.Time
 }
 
 func (u *ListUpdater) Start() {
-	log.Info("Registered Update Hook")
+	log.Info("Initializing CoreDNS 'ads' list update routines...")
 
 	go func() {
 		//Sleep 250 MS to ensure coredns is up and running
 		time.Sleep(250 * time.Millisecond)
 
 		if !u.persistLists || !exists(u.persistencePath) {
-			bm, err := GenerateListMapFromHTTPUrls(u.Plugin.Blacklists)
+			wl, bl, err := u.fetchHTTPLists()
 			if err != nil {
 				log.Error(err)
 				return
 			}
-			u.Plugin.blacklist = bm
-			persistLoadedBlocklist(u, u.Enabled, u.Plugin.config.BlacklistURLs, bm, u.persistencePath)
+			u.Plugin.blacklist = bl
+			u.Plugin.whitelist = wl
+			u.persistLoadedHttpLists()
 		} else {
-			storedBlocklist, err := ReadListConfiguration(u.persistencePath)
+			storedListSet, err := ReadListConfiguration(u.persistencePath)
 			if err != nil {
 				panic(fmt.Sprintf("Loading persisted blocklist from %q failed", u.persistencePath))
 			}
-			if storedBlocklist.NeedsUpdate(u.UpdateInterval) && u.Enabled ||
-				!validateBlocklistEquality(u.Plugin.config.BlacklistURLs, storedBlocklist.Blocklists) && u.Enabled ||
+			if storedListSet.NeedsUpdate(u.UpdateInterval) && u.Enabled ||
+				!validateURLListEquality(u.Plugin.config.BlacklistURLs, storedListSet.BlacklistURLs) && u.Enabled ||
+				!validateURLListEquality(u.Plugin.config.WhitelistURLs, storedListSet.WhitelistURLs) && u.Enabled ||
 				!u.Enabled {
-				bm, err := GenerateListMapFromHTTPUrls(u.Plugin.config.BlacklistURLs)
+				wl, bl, err := u.fetchHTTPLists()
 				if err != nil {
 					log.Error(err)
 					return
 				}
-				u.Plugin.blacklist = bm
-				persistLoadedBlocklist(u, u.Enabled, u.Plugin.config.BlacklistURLs, bm, u.persistencePath)
+				u.Plugin.blacklist = bl
+				u.Plugin.whitelist = wl
+				u.persistLoadedHttpLists()
 			} else {
-				u.Plugin.blacklist = storedBlocklist.BlockedNames
+				u.Plugin.whitelist = storedListSet.Whitelist
+				u.Plugin.blacklist = storedListSet.Blacklist
 
-				log.Infof("Loaded Blocklist Length: %d", len(storedBlocklist.BlockedNames))
-				log.Infof("Blocklist Length: %d", len(u.Plugin.blacklist))
+				log.Infof("Loaded Whitelist (HTTP) Length: %d", len(storedListSet.Whitelist))
+				log.Infof("Loaded Blacklist (HTTP) Length: %d", len(storedListSet.Blacklist))
 
-				u.lastPersistenceUpdate = time.Unix(int64(storedBlocklist.UpdateTimestamp), 0)
+				u.lastPersistenceUpdate = time.Unix(int64(storedListSet.UpdateTimestamp), 0)
 			}
 		}
 
+		go u.runFileUpdater()
+
 		if u.Enabled {
-			go u.run()
+			go u.runHttpUpdater()
 		}
 	}()
 }
 
-func (u *ListUpdater) run() {
-	log.Info("Running update loop")
+func (u *ListUpdater) runFileUpdater() {
+	u.fileUpdateTicker = time.NewTicker(u.Plugin.config.FileListRenewalInterval)
+	u.handleFileUpdate()
+
+	for range u.fileUpdateTicker.C {
+		u.handleFileUpdate()
+	}
+}
+
+func (u *ListUpdater) handleFileUpdate() {
+	log.Info("Updating lists from Local files...")
+
+	wl, bl, err := u.fetchFileLists()
+	if err != nil {
+		log.Errorf("Loading File lists has failed. Error message: %q", err.Error())
+		return
+	}
+	u.Plugin.FileRuleSet.Whitelist = wl
+	u.Plugin.FileRuleSet.Blacklist = bl
+}
+
+func (u *ListUpdater) runHttpUpdater() {
+	log.Info("Updating lists from HTTP URLs...")
 	if u.persistLists {
 		sleepDuration := u.lastPersistenceUpdate.Add(u.UpdateInterval).Sub(time.Now())
 		log.Infof("Scheduled next update in %s", sleepDuration.String())
 		time.Sleep(sleepDuration)
 
-		u.handleListUpdate()
+		u.handleHTTPListUpdate()
 	}
 
-	u.updateTicker = time.NewTicker(u.UpdateInterval)
+	u.httpUpdateTicker = time.NewTicker(u.UpdateInterval)
 
-	for range u.updateTicker.C {
-		u.handleListUpdate()
-		log.Infof("Scheduled next update in %s at %s", u.UpdateInterval.String(), time.Now().Add(u.UpdateInterval).String())
+	for range u.httpUpdateTicker.C {
+		u.handleHTTPListUpdate()
+		log.Infof("Scheduled next update of HTTP lists in %s at %s", u.UpdateInterval.String(), time.Now().Add(u.UpdateInterval).String())
 	}
 }
 
@@ -110,6 +138,7 @@ func (u *ListUpdater) fetchHTTPLists() (ListMap, ListMap, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Infof("[HTTP Update] Loaded %d entries into Blacklist and %d entries into whitelist", len(blacklist), len(whitelist))
 	return whitelist, blacklist, nil
 }
 
@@ -122,13 +151,14 @@ func (u *ListUpdater) fetchFileLists() (ListMap, ListMap, error) {
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Infof("[File Update] Loaded %d entries into Blacklist and %d entries into whitelist", len(blacklist), len(whitelist))
 	return whitelist, blacklist, nil
 }
 
-func (u *ListUpdater) handleListUpdate() {
+func (u *ListUpdater) handleHTTPListUpdate() {
+	log.Infof("Updating and Persisting HTTP lists...")
 	failCount := 0
 	for failCount < u.RetryCount {
-		log.Infof("Updating lists...")
 
 		whitelist, blacklist, err := u.fetchHTTPLists()
 		if err != nil {
@@ -146,17 +176,19 @@ func (u *ListUpdater) handleListUpdate() {
 		if u.persistLists {
 			persistedList := StoredListConfiguration{
 				UpdateTimestamp: int(time.Now().Unix()),
-				Blocklists:      u.Plugin.config.BlacklistURLs,
-				BlockedNames:    blacklist,
+				BlacklistURLs:   u.Plugin.config.BlacklistURLs,
+				WhitelistURLs:   u.Plugin.config.WhitelistURLs,
+				Blacklist:       blacklist,
+				Whitelist:       whitelist,
 			}
 
 			err := persistedList.Persist(u.persistencePath)
 			if err == nil {
 				u.lastPersistenceUpdate = time.Now()
 			} else {
-				log.Error("Persisting blocklists failed.")
+				log.Error("Persisting HTTP Lists failed.")
 			}
 		}
-		log.Info("Blocklists have been updated")
+		log.Info("Lists with HTTP URLs have been updated")
 	}
 }

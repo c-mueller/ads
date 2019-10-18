@@ -24,7 +24,7 @@ import (
 	"sort"
 )
 
-func validateBlocklistEquality(a, b []string) bool {
+func validateURLListEquality(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
