@@ -43,7 +43,7 @@ steps:
       - git clone https://github.com/coredns/coredns.git /go/src/github.com/coredns/coredns
       - cd /go/src/github.com/coredns/coredns
       - git checkout $(git describe --tags --abbrev=0)
-      - sed -i 's|loadbalance:loadbalance|ads:ads\nloadbalance:loadbalance|g' plugin.cfg
+      - sed -i 's|loadbalance:loadbalance|ads:ads\\nloadbalance:loadbalance|g' plugin.cfg
       - ln -s /go/src/github.com/c-mueller/ads/ /go/src/github.com/coredns/coredns/plugin/ads
       - make
       - mkdir -p /go/src/github.com/c-mueller/ads/binaries
@@ -113,4 +113,4 @@ steps:
 
 ---
 kind: signature
-hmac: c9ba5a5f6f8a8a1b8569edff25306fd18fb7d2513b23b4ea38bc8a8e7fc123df
+hmac: f19c4b1debb1ca5e728618311f6329253eb0780a2ca9d47e1aea81c5550f2a0b
