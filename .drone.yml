@@ -31,8 +31,6 @@ steps:
       CODECOV_TOKEN:
         from_secret: codecov_token
     commands:
-      - go get -v github.com/Flaque/filet
-      - go get -v github.com/stretchr/testify/assert
       - go test -coverprofile=coverage.txt -covermode=atomic -v ./...
       - curl -s https://codecov.io/bash | bash
   - name: build
@@ -113,4 +111,4 @@ steps:
 
 ---
 kind: signature
-hmac: dc69aaf40668c0e85a2c6bd1caa1c07e33319d62928d3abd82a8ec321cb468c3
+hmac: e7dc8f3c2998a2bcb4d40a5cf43eb454ea0f96dfb3a9091b8cc4fb0458fe7b2a
