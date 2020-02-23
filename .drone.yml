@@ -44,6 +44,7 @@ steps:
       - sed -i "s|loadbalance:loadbalance|ads:ads\\\\nloadbalance:loadbalance|g" plugin.cfg
       - ln -s /go/src/github.com/c-mueller/ads/ /go/src/github.com/coredns/coredns/plugin/ads
       - make
+      - ./coredns -plugins
       - mkdir -p /go/src/github.com/c-mueller/ads/binaries
       - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-linux-amd64
   - name: build-coredns-win
@@ -111,4 +112,4 @@ steps:
 
 ---
 kind: signature
-hmac: e7dc8f3c2998a2bcb4d40a5cf43eb454ea0f96dfb3a9091b8cc4fb0458fe7b2a
+hmac: 2933f9fd861ace33359ed898cb99cc2d60476d8400f03d43cf77b65a9e626775
