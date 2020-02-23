@@ -35,7 +35,7 @@ func setup(c *caddy.Controller) error {
 	// Modify based on current version
 	// Currently no (useful) automated procedure known
 	// ToDo Investigate automated options for this
-	log.Info("Initializing CoreDNS 'ads' plugin. Version 0.2.0")
+	log.Info("Initializing CoreDNS 'ads' plugin. Version 0.2.1")
 	c.Next()
 	cfg, err := parsePluginConfiguration(c)
 	if err != nil {
