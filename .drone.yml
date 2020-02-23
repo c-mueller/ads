@@ -23,26 +23,6 @@ workspace:
   path: src/github.com/c-mueller/ads
 
 steps:
-  - name: load-deps
-    image: golang
-    commands:
-      - go get -v -d ./...
-      - go get -v github.com/Flaque/filet
-      - go get -v github.com/stretchr/testify/assert
-  - name: build-coredns-amd64
-    image: golang
-    environment:
-      GO111MODULE: on
-    commands:
-      - cd /go/src/github.com/coredns/coredns
-      - git checkout $(git describe --tags --abbrev=0)
-      - sed -i 's|loadbalance:loadbalance|ads:github.com/c-mueller/ads\nloadbalance:loadbalance|g' plugin.cfg
-      - make
-      - cd /go/src/github.com/coredns/coredns
-      - echo "replace github.com/c-mueller/ads "$(cat go.mod | grep 'github.com/c-mueller/ads ' | sed 's|github.com/c-mueller/ads ||g; s|\t||g')" => "$(go env GOPATH)"/src/github.com/c-mueller/ads" >> go.mod
-      - make
-      - mkdir /go/src/github.com/c-mueller/ads/binaries
-      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-amd64
   - name: test
     image: golang
     secrets:
@@ -51,8 +31,23 @@ steps:
       CODECOV_TOKEN:
         from_secret: codecov_token
     commands:
+      - go get -v github.com/Flaque/filet
+      - go get -v github.com/stretchr/testify/assert
       - go test -coverprofile=coverage.txt -covermode=atomic -v ./...
       - curl -s https://codecov.io/bash | bash
+  - name: build
+    image: golang
+    commands:
+      - rm go.mod go.sum || true
+      - mkdir -p /go/src/github.com/coredns/coredns
+      - git clone https://github.com/coredns/coredns.git /go/src/github.com/coredns/coredns
+      - cd /go/src/github.com/coredns/coredns
+      - git checkout $(git describe --tags --abbrev=0)
+      - sed -i 's|loadbalance:loadbalance|ads:ads\nloadbalance:loadbalance|g' plugin.cfg
+      - ln -s /go/src/github.com/c-mueller/ads/ /go/src/github.com/coredns/coredns/plugin/ads
+      - make
+      - mkdir -p /go/src/github.com/c-mueller/ads/binaries
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-ads-linux-amd64
   - name: build-coredns-win
     image: golang
     environment:
@@ -61,7 +56,7 @@ steps:
     commands:
       - cd /go/src/github.com/coredns/coredns
       - make
-      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-win.exe
+      - mv coredns /go/src/github.com/c-mueller/ads/binaries/coredns-win-amd64.exe
     when:
       event: tag
   - name: build-coredns-darwin
@@ -118,4 +113,4 @@ steps:
 
 ---
 kind: signature
-hmac: 5613731f6babcf9ee1bf05ddeff39522abde770f72613ab70a9215f231797f23
+hmac: c9ba5a5f6f8a8a1b8569edff25306fd18fb7d2513b23b4ea38bc8a8e7fc123df
