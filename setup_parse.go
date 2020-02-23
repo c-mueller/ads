@@ -158,7 +158,7 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No name for whitelist regex (permit-regex) entry defined"))
 			}
-			config.RegexBlacklistRules = append(config.RegexWhitelistRules, c.Val())
+			config.RegexWhitelistRules = append(config.RegexWhitelistRules, c.Val())
 			break
 		case "nxdomain":
 			config.WriteNXDomain = true
