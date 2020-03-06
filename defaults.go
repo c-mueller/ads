@@ -74,7 +74,8 @@ var strictDefaultBlacklists = []string{
 	"http://www.malwaredomainlist.com/hostslist/hosts.txt",               
 	"http://www.malwaredomainlist.com/hostslist/delisted.txt",
 	"https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns",
-	"https://hosts-file.net/psh.txt"
+	"https://hosts-file.net/psh.txt",
+	"https://hosts-file.net/fsa.txt",
 }
 
 const defaultIPv4ResolutionIP = "127.0.0.1"
