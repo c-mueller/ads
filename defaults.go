@@ -73,7 +73,8 @@ var strictDefaultBlacklists = []string{
 	"https://zerodot1.gitlab.io/CoinBlockerLists/hosts",
 	"http://www.malwaredomainlist.com/hostslist/hosts.txt",               
 	"http://www.malwaredomainlist.com/hostslist/delisted.txt",
-	"https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns"
+	"https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns",
+	"https://hosts-file.net/psh.txt"
 }
 
 const defaultIPv4ResolutionIP = "127.0.0.1"
