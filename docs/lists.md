@@ -56,4 +56,9 @@ https://gitlab.com/quidsup/notrack-blocklists/raw/master/notrack-blocklist.txt
 https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.2o7Net/hosts
 https://raw.githubusercontent.com/crazy-max/WindowsSpyBlocker/master/data/hosts/spy.txt
 https://zerodot1.gitlab.io/CoinBlockerLists/hosts
+http://www.malwaredomainlist.com/hostslist/hosts.txt
+http://www.malwaredomainlist.com/hostslist/delisted.txt
+https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns
+https://hosts-file.net/psh.txt
+https://hosts-file.net/fsa.txt
 ```
