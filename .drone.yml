@@ -1,4 +1,4 @@
-# Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+# Copyright 2018 - 2020 Christian Müller <dev@c-mueller.xyz>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -112,4 +112,4 @@ steps:
 
 ---
 kind: signature
-hmac: 2933f9fd861ace33359ed898cb99cc2d60476d8400f03d43cf77b65a9e626775
+hmac: 18133e199d1805cb81c7f014786ddbb5ab3f44254f4f26f9d41bb12c5198e8d0

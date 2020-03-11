@@ -48,7 +48,9 @@ Some Examples:
     - This command is needed if you want to add custom blocklists and you want to also use the default ones.
     - To see a List of the Blacklist URLs click [here](lists.md)
 - `strict-default-lists` Use the strict default blocklists, instead of the more soft ones.
+    - Also adds a default whitelist, which can be found in this repository (`/lists/strict-whitelist.txt`) to prevent blocking of popular domains such as Facebook or Amazon.
     - To see a List of the Blacklist URLs click [here](lists.md)
+- `unfiltered-strict-default-lists` just like `strict-default-lists` but here the afforementioned default whitelist is not added
 - `target <IPv4 IP>` defines the target ip to which blocked domains should resolve to if a A record is requested
 - `target-ipv6 <IPv6 IP>` defines the target IPv6 address to which blocked domains should resolve to if a AAAA record is requested
 - `disable-auto-update` Turns off the automatic update of the blocklists every 24h (can be changed)
