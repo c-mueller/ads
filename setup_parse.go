@@ -63,6 +63,8 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 		case "strict-default-lists":
 			config.BlacklistURLs = append(config.BlacklistURLs, strictDefaultBlacklists...)
 			config.WhitelistURLs = append(config.WhitelistURLs, strictDefaultWhitelists...)
+		case "unfiltered-strict-default-lists":
+			config.BlacklistURLs = append(config.BlacklistURLs, strictDefaultBlacklists...)
 		case "blacklist":
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No URL found after list token"))
