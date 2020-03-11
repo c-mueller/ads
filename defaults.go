@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 - 2019 Christian Müller <dev@c-mueller.xyz>
+ * Copyright 2018 - 2020 Christian Müller <dev@c-mueller.xyz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ var strictDefaultBlacklists = []string{
 	"https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
 	"https://mirror1.malwaredomains.com/files/justdomains",
 	"http://sysctl.org/cameleon/hosts",
-	"https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
 	"https://hosts-file.net/ad_servers.txt",
@@ -55,7 +54,7 @@ var strictDefaultBlacklists = []string{
 	"https://raw.githubusercontent.com/Dawsey21/Lists/master/main-blacklist.txt",
 	"https://raw.githubusercontent.com/vokins/yhosts/master/hosts",
 	"https://hostsfile.mine.nu/hosts0.txt",
-	"https://v.firebog.net/hosts/Kowabit.txt",
+	"https://list.kwbt.de/fritzboxliste.txt",
 	"https://adaway.org/hosts.txt",
 	"https://v.firebog.net/hosts/AdguardDNS.txt",
 	"https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
@@ -76,6 +75,10 @@ var strictDefaultBlacklists = []string{
 	"https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns",
 	"https://hosts-file.net/psh.txt",
 	"https://hosts-file.net/fsa.txt",
+}
+
+var strictDefaultWhitelists = []string{
+	"https://raw.github.com/c-mueller/ads/master/lists/strict-whitelist.txt",
 }
 
 const defaultIPv4ResolutionIP = "127.0.0.1"
