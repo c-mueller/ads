@@ -17,6 +17,7 @@
 package ads
 
 import (
+	"golang.org/x/net/idna"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -111,6 +112,12 @@ func parseListFile(data []byte, blockageMap ListMap) {
 		}
 
 		if url == "" {
+			continue
+		}
+
+		var err error
+		url, err = idna.ToASCII(url)
+		if err != nil {
 			continue
 		}
 
