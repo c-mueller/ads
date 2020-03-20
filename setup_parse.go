@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/caddyserver/caddy"
 	"github.com/coredns/coredns/plugin"
+	"golang.org/x/net/idna"
 	"net"
 	"net/url"
 	"time"
@@ -143,7 +144,12 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No name for blacklist (block) entry defined"))
 			}
-			config.BlacklistRules = append(config.BlacklistRules, c.Val())
+			v := c.Val()
+			encoded, err := idna.ToASCII(v)
+			if err != nil {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Could not decode IDN of qname %q", v)))
+			}
+			config.BlacklistRules = append(config.BlacklistRules, encoded)
 			break
 		case "block-regex":
 			if !c.NextArg() {
@@ -155,7 +161,12 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 			if !c.NextArg() {
 				return nil, plugin.Error("ads", c.Err("No name for whitelist (permit) entry defined"))
 			}
-			config.WhitelistRules = append(config.WhitelistRules, c.Val())
+			v := c.Val()
+			encoded, err := idna.ToASCII(v)
+			if err != nil {
+				return nil, plugin.Error("ads", c.Err(fmt.Sprintf("Could not decode IDN of qname %q", v)))
+			}
+			config.WhitelistRules = append(config.WhitelistRules, encoded)
 			break
 		case "permit-regex":
 			if !c.NextArg() {

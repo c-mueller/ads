@@ -9,5 +9,5 @@ require (
 	github.com/miekg/dns v1.1.28
 	github.com/prometheus/client_golang v1.5.0
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/net v0.0.0-20200301022130-244492dfa37a
+	golang.org/x/net v0.0.0-20200320181208-1c781a10960a
 )

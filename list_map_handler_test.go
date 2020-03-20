@@ -52,6 +52,7 @@ func TestListFetch(t *testing.T) {
 	expData, err := ioutil.ReadAll(expectedList)
 
 	for _, url := range strings.Split(string(expData), "\n") {
+		t.Logf("Expected QName: %q Found: %v", url, list[url])
 		assert.True(t, list[url])
 	}
 	assert.False(t, list["testme.com"])

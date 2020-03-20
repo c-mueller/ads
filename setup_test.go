@@ -92,6 +92,14 @@ const invalid_Blacklist_Multi = `ads {
   block
 }`
 
+const valid_IDN_Block = `ads {
+  block mähl.c-mueller.de
+}`
+
+const valid_IDN_Permit = `ads {
+  permit mähl.c-mueller.de
+}`
+
 const valid_Regex_Whitelist_Single = `ads {
   permit-regex (^|\.)local\.c-mueller\.de$
 }`
@@ -215,6 +223,8 @@ func TestSetup_ValidWhiteAndBlacklist(t *testing.T) {
 		valid_Blacklist_Single,
 		valid_Whitelist_Multi,
 		valid_Whitelist_Single,
+		valid_IDN_Block,
+		valid_IDN_Permit,
 	}
 
 	for _, v := range cfs {
