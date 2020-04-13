@@ -37,7 +37,8 @@ func GenerateListMap(urls []string, fetchFunc func(ref string) ([]byte, error)) 
 
 		data, err := fetchFunc(listUrl)
 		if err != nil {
-			return nil, err
+			log.Warningf("Loading list from url %q failed with error: %s", listUrl, err.Error())
+			continue
 		}
 		parseListFile(data, listMap)
 	}
