@@ -84,6 +84,32 @@ func TestBlocklistUpdaterWithBadList(t *testing.T) {
 	assert.Equal(t, 0, len(p.blacklist))
 }
 
+func TestBlocklistUpdaterWithBadAndGoodList(t *testing.T) {
+	server := initTestServer(t)
+	defer server.Close()
+
+	url := fmt.Sprintf("%s/list.txt", server.URL)
+	p := initTestPlugin(t, getEmptyRuleset())
+
+	p.config.BlacklistURLs = []string{url, "https://badhost/doesnotexist"}
+	p.blacklist = make(ListMap, 0)
+
+	updater := ListUpdater{
+		Enabled:        false,
+		Plugin:         p,
+		UpdateInterval: time.Second * 2,
+		RetryCount:     10,
+		RetryDelay:     time.Second * 1,
+	}
+
+	p.updater = &updater
+	p.updater.Start()
+
+	// give it time to fail
+	time.Sleep(time.Second * 6)
+	assert.Equal(t, 1000, len(p.blacklist))
+}
+
 func initTestServer(t *testing.T) *httptest.Server {
 	firstPath, err := os.Open(firstHostlistPath)
 	assert.NoError(t, err)
