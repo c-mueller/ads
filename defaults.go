@@ -28,7 +28,6 @@ var defaultBlacklists = []string{
 	"https://zeustracker.abuse.ch/blocklist.php?download=domainblocklist",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-	"https://hosts-file.net/ad_servers.txt",
 }
 
 var strictDefaultBlacklists = []string{
@@ -37,8 +36,6 @@ var strictDefaultBlacklists = []string{
 	"http://sysctl.org/cameleon/hosts",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_tracking.txt",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-	"https://hosts-file.net/ad_servers.txt",
-	"https://hosts-file.net/grm.txt",
 	"https://reddestdream.github.io/Projects/MinimalHosts/etc/MinimalHostsBlocker/minimalhosts",
 	"https://raw.githubusercontent.com/StevenBlack/hosts/master/data/KADhosts/hosts",
 	"https://raw.githubusercontent.com/StevenBlack/hosts/master/data/add.Spam/hosts",
@@ -59,7 +56,6 @@ var strictDefaultBlacklists = []string{
 	"https://v.firebog.net/hosts/AdguardDNS.txt",
 	"https://raw.githubusercontent.com/anudeepND/blacklist/master/adservers.txt",
 	"https://s3.amazonaws.com/lists.disconnect.me/simple_ad.txt",
-	"https://hosts-file.net/ad_servers.txt",
 	"https://v.firebog.net/hosts/Easylist.txt",
 	"https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts;showintro=0",
 	"https://raw.githubusercontent.com/StevenBlack/hosts/master/data/UncheckyAds/hosts",
@@ -73,8 +69,6 @@ var strictDefaultBlacklists = []string{
 	"http://www.malwaredomainlist.com/hostslist/hosts.txt",
 	"http://www.malwaredomainlist.com/hostslist/delisted.txt",
 	"https://raw.github.com/jonschipp/mal-dnssearch/master/mandiant_apt1.dns",
-	"https://hosts-file.net/psh.txt",
-	"https://hosts-file.net/fsa.txt",
 }
 
 var strictDefaultWhitelists = []string{
