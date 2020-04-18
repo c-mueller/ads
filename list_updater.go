@@ -165,7 +165,7 @@ func (u *ListUpdater) handleHTTPListUpdate() {
 			log.Errorf("Attempt %d/%d failed. Error %q", failCount+1, u.RetryCount, err.Error())
 			failCount++
 			time.Sleep(u.RetryDelay)
-			break
+			continue
 		}
 		u.Plugin.blacklist = blacklist
 		u.Plugin.whitelist = whitelist
@@ -190,5 +190,6 @@ func (u *ListUpdater) handleHTTPListUpdate() {
 			}
 		}
 		log.Info("Lists with HTTP URLs have been updated")
+		break
 	}
 }
