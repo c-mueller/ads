@@ -135,7 +135,9 @@ func cleanHostsLine(line string) string {
 	ln := strings.TrimSuffix(line, " ")
 	ln = strings.Replace(line, " ", "\t", -1)
 	ln = strings.Replace(ln, "\r", "", -1)
-	// Escape quotes to prevent compialtion issues
+	ln = strings.Replace(ln, "|", "", -1)
+	ln = strings.Replace(ln, "^", "", -1)
+	// Escape quotes to prevent compilation issues
 	// Of course entries containing such data are useless
 	ln = strings.Replace(ln, "\"", "\\\"", -1)
 	return ln

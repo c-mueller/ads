@@ -27,6 +27,14 @@ import (
 	"testing"
 )
 
+func TestLookup_CNAME_Blocked_Root(t *testing.T) {
+	// TODO IMPLEMENT ME
+}
+
+func TestLookup_CNAME_Blocked_CNAME(t *testing.T) {
+	// TODO IMPLEMENT ME
+}
+
 func TestLookup_Block_IPv6(t *testing.T) {
 	blacklist := make([]string, 0)
 
@@ -185,7 +193,6 @@ func TestLookup_Allow(t *testing.T) {
 	ctx := context.TODO()
 
 	testCases := initAllowedTestCases()
-
 
 	resolveTestCases(testCases, p, ctx, t)
 }
