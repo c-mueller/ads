@@ -24,6 +24,8 @@ import (
 	"time"
 )
 
+const Version = "0.2.3"
+
 func init() {
 	caddy.RegisterPlugin("ads", caddy.Plugin{
 		ServerType: "dns",
@@ -35,7 +37,7 @@ func setup(c *caddy.Controller) error {
 	// Modify based on current version
 	// Currently no (useful) automated procedure known
 	// ToDo Investigate automated options for this
-	log.Info("Initializing CoreDNS 'ads' plugin. Version 0.2.1")
+	log.Infof("Initializing CoreDNS 'ads' plugin. Version %s", Version)
 	c.Next()
 	cfg, err := parsePluginConfiguration(c)
 	if err != nil {
@@ -56,8 +58,6 @@ func setup(c *caddy.Controller) error {
 		once.Do(func() {
 			metrics.MustRegister(c, requestCount)
 			metrics.MustRegister(c, blockedRequestCount)
-			metrics.MustRegister(c, requestCountBySource)
-			metrics.MustRegister(c, blockedRequestCountBySource)
 			updater.Start()
 		})
 		return nil

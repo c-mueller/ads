@@ -19,10 +19,42 @@ package ads
 import (
 	"bytes"
 	gz "compress/gzip"
+	"fmt"
+	"github.com/miekg/dns"
 	"io/ioutil"
+	"net"
 	"os"
-	"sort"
 )
+
+func a(zone string, ips []net.IP) []dns.RR {
+	var answers []dns.RR
+	for _, ip := range ips {
+		r := new(dns.A)
+		r.Hdr = dns.RR_Header{Name: zone, Rrtype: dns.TypeA,
+			Class: dns.ClassINET, Ttl: 3600}
+		r.A = ip
+		answers = append(answers, r)
+	}
+	return answers
+}
+
+func aaaa(zone string, ips []net.IP) []dns.RR {
+	var answers []dns.RR
+	for _, ip := range ips {
+		r := new(dns.AAAA)
+		r.Hdr = dns.RR_Header{Name: zone, Rrtype: dns.TypeAAAA,
+			Class: dns.ClassINET, Ttl: 3600}
+		r.AAAA = ip
+		answers = append(answers, r)
+	}
+	return answers
+}
+
+func nxdomain(zone string) []dns.RR {
+	s := fmt.Sprintf("%s 60 IN SOA ns1.%s postmaster.%s 1524370381 14400 3600 604800 60", zone, zone, zone)
+	soa, _ := dns.NewRR(s)
+	return []dns.RR{soa}
+}
 
 func validateURLListEquality(a, b []string) bool {
 	if len(a) != len(b) {
@@ -42,7 +74,7 @@ func validateURLListEquality(a, b []string) bool {
 	return true
 }
 
-func exists(path string) (bool) {
+func exists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
@@ -75,37 +107,4 @@ func gunzip(data []byte) ([]byte, error) {
 	defer compressionReader.Close()
 
 	return ioutil.ReadAll(compressionReader)
-}
-
-type pair struct {
-	Key   string
-	Value int
-}
-type pairs []pair
-
-func (p pairs) Len() int           { return len(p) }
-func (p pairs) Less(i, j int) bool { return p[i].Value < p[j].Value }
-func (p pairs) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-
-func keepHighestValues(input map[string]int, count int) map[string]int {
-	if len(input) <= count {
-		return input
-	}
-	elems := make(pairs, len(input))
-
-	idx := 0
-	for k, v := range input {
-		elems[idx] = pair{k, v}
-		idx++
-	}
-
-	sort.Sort(elems)
-
-	valmap := make(map[string]int)
-	for i := 0; i < count; i++ {
-		e := elems[i]
-		valmap[e.Key] = e.Value
-	}
-
-	return valmap
 }
