@@ -1,1 +1,0 @@
-/home/chris/go/src/github.com/c-mueller/ads/
