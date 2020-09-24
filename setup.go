@@ -20,11 +20,11 @@ import (
 	"github.com/caddyserver/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"time"
 )
 
-const Version = "0.2.3"
+const Version = "0.2.4"
 
 func init() {
 	caddy.RegisterPlugin("ads", caddy.Plugin{
@@ -56,8 +56,7 @@ func setup(c *caddy.Controller) error {
 
 	c.OnStartup(func() error {
 		once.Do(func() {
-			metrics.MustRegister(c, requestCount)
-			metrics.MustRegister(c, blockedRequestCount)
+			prometheus.MustRegister(requestCount, blockedRequestCount)
 			updater.Start()
 		})
 		return nil
