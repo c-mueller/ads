@@ -18,10 +18,11 @@ package ads
 
 import (
 	"fmt"
-	"github.com/caddyserver/caddy"
-	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/coredns/caddy"
+	"github.com/stretchr/testify/assert"
 )
 
 const default_Corefile = `ads`
