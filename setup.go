@@ -17,11 +17,12 @@
 package ads
 
 import (
-	"github.com/caddyserver/caddy"
+	"time"
+
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
 	"github.com/prometheus/client_golang/prometheus"
-	"time"
 )
 
 const Version = "0.2.4"

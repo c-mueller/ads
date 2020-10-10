@@ -18,12 +18,13 @@ package ads
 
 import (
 	"fmt"
-	"github.com/caddyserver/caddy"
-	"github.com/coredns/coredns/plugin"
-	"golang.org/x/net/idna"
 	"net"
 	"net/url"
 	"time"
+
+	"github.com/coredns/caddy"
+	"github.com/coredns/coredns/plugin"
+	"golang.org/x/net/idna"
 )
 
 type adsPluginConfig struct {
