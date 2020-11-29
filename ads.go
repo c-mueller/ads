@@ -44,9 +44,10 @@ func (e *DNSAdBlock) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.
 	trimmedQname := state.Name()
 	trimmedQname = strings.TrimSuffix(trimmedQname, ".")
 
-	requestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
+	requestCountTotal.WithLabelValues(metrics.WithServer(ctx)).Inc()
 
 	if e.ShouldBlock(trimmedQname) {
+		blockedRequestCountTotal.WithLabelValues(metrics.WithServer(ctx)).Inc()
 		blockedRequestCount.WithLabelValues(metrics.WithServer(ctx)).Inc()
 		e.onBlock(w, r, state, trimmedQname)
 		return dns.RcodeSuccess, nil
