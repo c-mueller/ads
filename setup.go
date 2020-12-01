@@ -57,7 +57,7 @@ func setup(c *caddy.Controller) error {
 
 	c.OnStartup(func() error {
 		once.Do(func() {
-			prometheus.MustRegister(requestCount, blockedRequestCount)
+			prometheus.MustRegister(requestCountTotal, blockedRequestCountTotal, blockedRequestCount)
 			updater.Start()
 		})
 		return nil
