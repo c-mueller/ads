@@ -19,24 +19,25 @@ package ads
 import (
 	"github.com/coredns/coredns/plugin"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"sync"
 )
 
-var requestCountTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+var requestCountTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: plugin.Namespace,
 	Subsystem: "ads",
 	Name:      "request_count_total",
 	Help:      "Total counter of requests made.",
 }, []string{"server"})
 
-var blockedRequestCountTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+var blockedRequestCountTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: plugin.Namespace,
 	Subsystem: "ads",
 	Name:      "blocked_request_count_total",
 	Help:      "Total counter of requests blocked by this plugin.",
 }, []string{"server"})
 
-var blockedRequestCount = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+var blockedRequestCount = promauto.NewGaugeVec(prometheus.GaugeOpts{
     Namespace: plugin.Namespace,
     Subsystem: "ads",
     Name:      "blocked_request_count",
