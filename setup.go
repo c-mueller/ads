@@ -25,7 +25,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-const Version = "0.2.4"
+const Version = "0.2.5"
 
 func init() {
 	caddy.RegisterPlugin("ads", caddy.Plugin{
