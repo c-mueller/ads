@@ -22,7 +22,6 @@ import (
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const Version = "0.2.5"
@@ -57,7 +56,6 @@ func setup(c *caddy.Controller) error {
 
 	c.OnStartup(func() error {
 		once.Do(func() {
-			prometheus.MustRegister(requestCountTotal, blockedRequestCountTotal, blockedRequestCount)
 			updater.Start()
 		})
 		return nil
