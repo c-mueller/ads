@@ -43,6 +43,8 @@ steps:
       - git checkout $(git describe --tags --abbrev=0)
       - sed -i "s|loadbalance:loadbalance|ads:ads\\\\nloadbalance:loadbalance|g" plugin.cfg
       - ln -s /go/src/github.com/c-mueller/ads/ /go/src/github.com/coredns/coredns/plugin/ads
+      - go get golang.org/x/net/context
+      - go get golang.org/x/net/idna
       - make
       - ./coredns -plugins
       - mkdir -p /go/src/github.com/c-mueller/ads/binaries
@@ -112,4 +114,4 @@ steps:
 
 ---
 kind: signature
-hmac: 18133e199d1805cb81c7f014786ddbb5ab3f44254f4f26f9d41bb12c5198e8d0
+hmac: d81e0a07677be692db9af2a7d0f59013a513bbd5dd3bccae2f38649241fb7ce0
