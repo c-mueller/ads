@@ -124,7 +124,17 @@ func parsePluginConfiguration(c *caddy.Controller) (*adsPluginConfig, error) {
 			if err != nil {
 				return nil, plugin.Error("ads", err)
 			}
-			config.ListRenewalRetryInterval = i
+			config.HttpListRenewalInterval = i
+			break
+		case "file-auto-update-interval":
+			if !c.NextArg() {
+				return nil, plugin.Error("ads", c.Err("No update interval defined"))
+			}
+			i, err := time.ParseDuration(c.Val())
+			if err != nil {
+				return nil, plugin.Error("ads", err)
+			}
+			config.FileListRenewalInterval = i
 			break
 			//TODO Add Options for Failure Retry interval and Failure retry count
 		case "list-store":

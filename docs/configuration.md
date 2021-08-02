@@ -55,10 +55,13 @@ Some Examples:
 - `target-ipv6 <IPv6 IP>` defines the target IPv6 address to which blocked domains should resolve to if a AAAA record is requested
 - `disable-auto-update` Turns off the automatic update of the blocklists every 24h (can be changed)
 - `log` Print a message every time a request gets blocked
-- `auto-update-interval <INTERVAL>` Allows the modification of the interval between blocklist updates
+- `auto-update-interval <INTERVAL>` Allows the modification of the interval between http blocklist updates
     - This operation uses Golangs `time.ParseDuration()` function in order to parse the duration.
     Please ensure the specified duration can be parsed by this operation. Please refer to [here](https://golang.org/pkg/time/#ParseDuration).
     - This gets ignored if the automatic blocklist updates have been disabled
+    - The default value is 24 hours
+- `file-auto-update-interval` Just like `auto-update-interval` just for lists in the local file system
+    - The default value is 1 minute
 - `list-store <FILEPATH FOR PERSISTED LISTS>` This option enables persisting of the HTTP lists
   to prevent a automatic redownload everytime CoreDNS restarts. The lists get persisted everytime a update get performed.
     - If autoupdates have been turned off the list will be reloaded every time the application launches.
