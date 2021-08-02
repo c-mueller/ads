@@ -5,6 +5,10 @@
 
 DNS AdBlocker plugin for CoreDNS.
 
+## IMPORTANT! - `ads` has been archived
+
+The project is no longer maintained, due to the lack of free time. I have therefore archived it. Feel free to fork it.
+
 ## Compiling
 
 First get the CoreDNS source code by running, after you cloned this repository into the proper path in your `GOPATH`
